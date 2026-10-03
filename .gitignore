@@ -21,4 +21,4 @@ instance/
 
 .DS_Store
 Thumbs.db
-"@ | Out-File -Encoding utf8 .gitignore
+"@ | Out-File -Encoding utf8 .gitignore.git-local-backup/
