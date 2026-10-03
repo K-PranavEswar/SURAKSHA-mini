@@ -1,457 +1,149 @@
-# SURAKSHA – A Rule Based Vulnerability Scanner with Risk Prediction
-
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&height=220&color=DC2626&text=SURAKSHA&fontColor=FFFFFF&fontSize=48&fontAlign=50&fontAlignY=38&desc=Advanced%20Web%20Application%20and%20Network%20Vulnerability%20Scanner&descAlign=50&descAlignY=60&descSize=18&descColor=FFF5F5" width="100%" />
+# 🛡️ SURAKSHA
+### Intelligent Rule-Based Vulnerability Scanner & Risk Prediction Engine
 
-<br>
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white)](#)
+[![Flask](https://img.shields.io/badge/Flask-Web%20Framework-000000?style=flat-square&logo=flask&logoColor=white)](#)
+[![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-Machine%20Learning-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)](#)
+[![Nmap](https://img.shields.io/badge/Network-Nmap%20Engine-blue?style=flat-square)](#)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](#)
 
 <p align="center">
-<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
-<img src="https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white"/>
-<img src="https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white"/>
-<img src="https://img.shields.io/badge/Bootstrap-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white"/>
-<img src="https://img.shields.io/badge/Nmap-217346?style=for-the-badge"/>
-<img src="https://img.shields.io/badge/Scapy-CC0000?style=for-the-badge"/>
-<img src="https://img.shields.io/badge/Machine%20Learning-Random%20Forest-orange?style=for-the-badge"/>
+  <em>A unified cybersecurity assessment platform bridging active reconnaissance, automated CVE correlation, and machine learning risk classification.</em>
 </p>
 
-> **An intelligent cybersecurity platform for authorized web vulnerability assessment, network reconnaissance, AI-assisted risk prediction, SSL analysis, traffic monitoring, and professional security reporting.**
-
 </div>
 
 ---
 
-# 📖 Overview
+## 📌 Overview
 
-**SURAKSHA** is an intelligent cybersecurity platform developed using **Python** and **Flask** to perform comprehensive web application and network security assessments. It combines automated vulnerability detection, network reconnaissance, SSL security analysis, AI-powered risk prediction, protocol analysis, and professional reporting within a single platform.
+**SURAKSHA** (सुरक्षा / സുരക്ഷ) is an integrated vulnerability assessment framework built using Python and Flask. It consolidates network host discovery, web application vulnerability scanning, and SSL/TLS cryptographic auditing into a single interface. 
 
-The system enables administrators and security analysts to identify vulnerabilities such as SQL Injection (SQLi), Cross-Site Scripting (XSS), missing HTTP security headers, exposed services, insecure SSL configurations, and vulnerable network ports. It also integrates machine learning using a **Random Forest Classifier** to predict network risk levels based on service characteristics and scan results.
-
-SURAKSHA provides a centralized dashboard that allows users to perform scans, monitor results, analyze vulnerabilities, classify security risks, and generate detailed reports for remediation.
+Rather than relying purely on static heuristics, SURAKSHA employs a **Random Forest Classifier** trained on port, service, version, and host attributes to predict multi-tier risk levels (`Low`, `Medium`, `High`, `Critical`), delivering prioritized remediation guidance.
 
 ---
 
-# ✨ Features
+## 🌟 Key Capabilities
 
-## 🌐 Web Vulnerability Scanner
+### 🌐 Web Application Security
+- **Injection Detection:** Heuristic- and payload-based discovery for SQL Injection (SQLi) and Reflected/Stored Cross-Site Scripting (XSS).
+- **Hardening Checks:** Automated inspection of modern HTTP security headers (`HSTS`, `CSP`, `X-Frame-Options`, `X-Content-Type-Options`).
+- **Surface Discovery:** Sensitive directory brute-forcing, server version disclosure, and technology stack fingerprinting.
 
-* SQL Injection Detection
-* Cross-Site Scripting (XSS) Detection
-* HTTP Security Header Analysis
-* Sensitive Directory Discovery
-* Technology Detection
-* Server Fingerprinting
-* Risk Classification
+### 🔌 Network Reconnaissance
+- **Host & Service Profiling:** Active host discovery, deep TCP/UDP port mapping, and live banner grabbing powered by Nmap integration.
+- **OS & Version Fingerprinting:** Precision operating system detection and version mapping across exposed network services.
 
----
+### 🔒 SSL / TLS Assessment
+- **Certificate Verification:** Chain validation, hostname verification, and proactive certificate expiry warnings.
+- **Protocol & Cipher Auditing:** Identifies legacy protocols (TLS 1.0/1.1) and evaluates cryptographic cipher suite strength.
 
-## 📡 Network Scanner
-
-* Host Discovery
-* TCP SYN Port Scanning
-* Banner Grabbing
-* Service Enumeration
-* Version Detection
-* Operating System Detection
-* Open Port Analysis
-* Intelligent Risk Classification
+### 🧠 Predictive Risk Scoring & CVE Intelligence
+- **Machine Learning Classifier:** Employs a trained Random Forest model that ingests multi-dimensional host parameters (`Port`, `Protocol`, `Service`, `Version`, `OS`, `Open Port Count`) to classify risk profiles.
+- **CVE Mapping:** Dynamically links discovered services and versions against known CVE indexes for contextual threat reporting.
 
 ---
 
-## 🤖 AI Risk Prediction
+## ⚙️ Architecture & Modules
 
-SURAKSHA integrates a Machine Learning model trained using a **Random Forest Classifier**.
-
-### AI Features
-
-* AI-Based Network Risk Prediction
-* Confidence Score Generation
-* Service Behaviour Analysis
-* Version-Based Risk Assessment
-* Operating System Correlation
-* Overall Risk Classification
-
-### Prediction Parameters
-
-* Port Number
-* Protocol
-* Service
-* Version
-* Operating System
-* Number of Open Ports
+| Module | Core Methodology | Primary Objective |
+| :--- | :--- | :--- |
+| **Web Scanner** | Signature & Payload Response Analysis | Identify client-side & server-side web flaws |
+| **Network Engine** | Nmap Scripting Engine & Version Scanning | Enumerate open attack vectors and services |
+| **SSL/TLS Inspector**| Socket & OpenSSL Handshake Inspection | Expose weak cryptography & expired certs |
+| **Risk Classifier** | Random Forest + Feature Encoders (TF-IDF/Joblib) | Quantify threat level into actionable tiers |
+| **CVE Correlator** | Service-to-Vulnerability Mapping | Provide contextual intelligence & remediation steps |
 
 ---
 
-## 🔍 Vulnerability Intelligence
+## 🛠️ Technology Stack
 
-The platform correlates detected services with a built-in vulnerability knowledge base.
-
-Features include
-
-* CVE Mapping
-* Port-Based Vulnerability Identification
-* Severity Classification
-* Recommended Mitigation
-* Security Best Practices
-
-Supported Risk Levels
-
-* Critical
-* High
-* Medium
-* Low
+```
+Frontend            HTML5 • CSS3 • Modern JavaScript • Bootstrap 5
+Backend Core        Python 3.9+ • Flask • SQLAlchemy • Jinja2
+Database            SQLite (Development / Default)
+Machine Learning    Scikit-learn • Random Forest • TF-IDF • Joblib
+Networking & Tools  Nmap Core • Requests • BeautifulSoup4 • Socket • SSL
+```
 
 ---
 
-## 🔒 SSL Security Analysis
-
-* SSL Certificate Validation
-* Certificate Expiry Detection
-* Hostname Verification
-* TLS Version Analysis
-* Encryption Strength Assessment
-
----
-
-## 📈 Traffic Monitoring
-
-Using **Scapy**, SURAKSHA provides
-
-* Live Packet Capture
-* Protocol Identification
-* Source/Destination Analysis
-* Website Resolution
-* Traffic Classification
-* Risk Assessment
-
----
-
-## 📊 Dashboard
-
-Interactive dashboard displaying
-
-* Total Scans
-* Risk Distribution
-* Open Ports
-* Vulnerability Statistics
-* Scan History
-* AI Confidence
-* CVE Count
-
----
-
-## 📄 Security Reports
-
-Generate professional reports including
-
-* Executive Summary
-* Vulnerability Details
-* Risk Assessment
-* AI Prediction
-* Security Recommendations
-* Scan Timestamp
-
----
-
-# 🧠 Core Algorithms
-
-| Module            | Algorithm / Technique                  |
-| ----------------- | -------------------------------------- |
-| Web Scanner       | Signature-Based Detection              |
-| SQL Injection     | Payload Analysis & Response Comparison |
-| XSS Detection     | Reflected Payload Detection            |
-| Security Headers  | Rule-Based Analysis                    |
-| Network Scanner   | TCP SYN Scan (Nmap)                    |
-| Banner Detection  | Service Fingerprinting                 |
-| Version Detection | Nmap Version Enumeration               |
-| OS Detection      | Nmap OS Fingerprinting                 |
-| AI Prediction     | Random Forest Classifier               |
-| Risk Engine       | Rule-Based Risk Scoring                |
-| CVE Mapper        | Port & Service Correlation             |
-| Traffic Monitor   | Live Packet Inspection (Scapy)         |
-
----
-
-# 💻 Technology Stack
-
-## Frontend
-
-* HTML5
-* CSS3
-* JavaScript
-* Bootstrap 5
-
-## Backend
-
-* Python
-* Flask
-
-## Database
-
-* SQLite
-
-## Machine Learning
-
-* Scikit-learn
-* Joblib
-* Random Forest
-
-## Cybersecurity Libraries
-
-* python-nmap
-* Scapy
-* Requests
-* Socket
-* SSL
-* BeautifulSoup4
-* urllib3
-* WHOIS
-
----
-
-# 📁 Project Structure
+## 📁 Repository Structure
 
 ```text
-SURAKSHA
-│
-├── ai/
-├── database/
-├── datasets/
-├── ml/
-├── models/
-├── scanner/
-├── templates/
-├── static/
-├── app.py
-├── requirements.txt
-└── README.md
+SURAKSHA/
+├── app.py                 # Flask server initialization and routing logic
+├── database/              # SQLite instances and database migration schemas
+├── datasets/              # Vulnerability datasets and ML training corpora
+├── models/                # Serialized model pipelines (.pkl / Joblib)
+├── scanner/               # Detection modules (web, network, ssl, nmap)
+├── static/                # Stylesheets, JavaScript plugins, and static assets
+├── templates/             # Responsive Bootstrap dashboard templates
+├── requirements.txt       # Environment dependencies
+└── README.md              # Project documentation
 ```
 
 ---
 
-# 📂 Major Modules
+## 🚀 Getting Started
 
-```
-Dashboard
+### Prerequisites
 
-Authentication
+- **Python 3.9+** installed on your system.
+- **Nmap** binary installed and added to your system environment variable path:
+  ```bash
+  # Linux (Ubuntu/Debian)
+  sudo apt install nmap
 
-Web Scanner
+  # macOS (Homebrew)
+  brew install nmap
+  ```
 
-Network Scanner
+### Installation
 
-SSL Checker
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/SURAKSHA.git
+   cd SURAKSHA
+   ```
 
-Traffic Monitor
+2. **Create and activate a virtual environment:**
+   ```bash
+   # Linux / macOS
+   python3 -m venv venv
+   source venv/bin/activate
 
-SQL Analyzer
+   # Windows
+   python -m venv venv
+   venv\Scripts\activate
+   ```
 
-AI Risk Predictor
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-Protocol Analyzer
+4. **Launch the platform:**
+   ```bash
+   python app.py
+   ```
 
-CVE Mapper
-
-Report Generator
-
-Admin Panel
-```
-
----
-
-# 📊 AI Prediction Engine
-
-Input Features
-
-* Port
-* Protocol
-* Service
-* Version
-* Operating System
-* Open Ports
-
-Output
-
-* Low
-* Medium
-* High
-* Critical
-
-Also provides
-
-* AI Confidence (%)
-* Risk Classification
-* Security Recommendation
+5. **Access the web console:**
+   Navigate to `http://127.0.0.1:5000` in your web browser.
 
 ---
 
-# 🛡 Supported Vulnerability Detection
+## 📊 Sample Output & Dashboard
 
-### Web
-
-* SQL Injection
-* Cross Site Scripting
-* Missing Security Headers
-* Sensitive Directories
-* Server Disclosure
-
-### Network
-
-* Open Ports
-* Insecure Services
-* Banner Information
-* Operating System
-* CVE Mapping
-
-### SSL
-
-* Invalid Certificates
-* Expired Certificates
-* Weak TLS
-* Hostname Mismatch
+The web interface compiles comprehensive vulnerability statistics, including:
+- **Scan History & Trends:** Visual breakdown of scans conducted across subnets.
+- **Risk Severity Breakdown:** Color-coded threat categorizations (`Low`, `Medium`, `High`, `Critical`).
+- **Exportable Reports:** Detailed audit summaries with timestamped CVE associations and recommended mitigations.
 
 ---
 
-# 🚀 Installation
+## ⚖️ Disclaimer
 
-## Clone Repository
-
-```bash
-git clone https://github.com/yourusername/SURAKSHA.git
-cd SURAKSHA
-```
-
----
-
-## Create Virtual Environment
-
-Windows
-
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-Linux
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
----
-
-## Install Requirements
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## Install Nmap
-
-Download
-
-https://nmap.org/download.html
-
-Verify
-
-```bash
-nmap --version
-```
-
----
-
-## Run Application
-
-```bash
-python app.py
-```
-
-Open
-
-```
-http://127.0.0.1:5000
-```
-
----
-
-# 🎯 Recommended Test Targets
-
-## Web
-
-* http://testphp.vulnweb.com
-* https://demo.testfire.net
-* https://demo.owasp-juice.shop
-
-## Network
-
-* scanme.nmap.org
-* localhost
-* 127.0.0.1
-
-## SSL
-
-* https://badssl.com
-
----
-
-# 📸 Screenshots
-
-Include screenshots of
-
-* Login
-* Dashboard
-* Web Scanner
-* Network Scanner
-* SSL Checker
-* Traffic Monitor
-* Reports
-* Admin Dashboard
-
----
-
-# 🚀 Future Enhancements
-
-* AI-Based Vulnerability Detection using Deep Learning
-* Automated CVE Database Updates
-* Real-Time Threat Intelligence Integration
-* Cloud Asset Discovery
-* Distributed Network Scanning
-* Scheduled Security Assessments
-* Email Alert System
-* PDF Report Enhancements
-* Multi-user Collaboration
-* SIEM Integration
-
----
-
-# ⚠ Legal Disclaimer
-
-SURAKSHA is developed strictly for **educational, research, and authorized cybersecurity assessment purposes only**.
-
-Users must obtain proper authorization before scanning any website, server, or network. Unauthorized vulnerability assessment or penetration testing may violate applicable laws and regulations.
-
-The developer assumes no responsibility for misuse of this software.
-
----
-
-# 👨‍💻 Developer
-
-**K Pranav Eswar**
-
-MCA Student
-
-Python • Flask • Cybersecurity • Machine Learning
-
----
-
-<div align="center">
-
-### ⭐ If you like this project, consider giving it a Star ⭐
-
-**Made with ❤️ using Python & Flask**
-
-</div>
+> **Notice:** SURAKSHA is developed exclusively for educational, authorized penetration testing, and system auditing purposes. Executing vulnerability scans against target networks or hosts without explicit prior authorization is illegal. Use responsibly.
