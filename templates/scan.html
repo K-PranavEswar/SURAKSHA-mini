@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Scan Matrix - SURAKSHA</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <script>
+        const savedTheme = localStorage.getItem("theme") || "blue";
+        if (savedTheme === "red") {
+            document.documentElement.setAttribute("data-theme", "red");
+        }
+    </script>
+
+    <style>
+        :root {
+            /* DEFAULT BLUE CYBER THEME */
+            --bg-main: #060b26;
+            --bg-card: #101935;
+            --bg-sidebar: #0b112c;
+            --bg-inner: #0b112c;
+            
+            --accent-primary: #00e5ff;
+            --accent-primary-rgb: 0, 229, 255;
+            --accent-secondary: #1d4ed8;
+            
+            --text-white: #94a3b8;
+            
+            --color-critical: #ef4444;
+            --color-medium: #f59e0b;
+            --color-low: #10b981;
+        }
+
+        html[data-theme="red"] {
+            /* PREMIUM RED BLACK CYBER THEME */
+            --bg-main: #050505;
+            --bg-card: #0d0d0d;
+            --bg-sidebar: #090909;
+            --bg-inner: #0a0a0a;
+
+            --accent-primary: #ff003c; 
+            --accent-primary-rgb: 255, 0, 60;
+            --accent-secondary: #8b0000; 
+
+            --text-white: #7a7a7a;
+            
+            --color-critical: #ff3b3b;
+            --color-medium: #ff7b00;
+            --color-low: #00c896;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-main);
+            color: #ffffff;
+            overflow-x: hidden;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: fixed;
+            width: 260px;
+            height: 100vh;
+            background: var(--bg-sidebar);
+            padding: 30px 20px;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 1000;
+            transition: background-color 0.4s ease, border-color 0.4s ease;
+        }
+
+        .logo {
+            font-size: 28px;
+            color: var(--accent-primary);
+            margin-bottom: 40px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.4s ease;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: #94a3b8;
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar a i {
+            font-size: 1.2rem;
+        }
+
+        .sidebar a:hover, .active-link {
+            background: rgba(var(--accent-primary-rgb), 0.1);
+            color: var(--accent-primary) !important;
+            box-shadow: inset 0 0 10px rgba(var(--accent-primary-rgb), 0.05);
+        }
+
+        /* Content Workspace Area */
+        .main-content {
+            margin-left: 260px;
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        /* Top Header Navigation */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: border-color 0.4s ease;
+        }
+
+        .topbar h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .topbar p {
+            color: var(--text-white);
+            margin: 0;
+            font-size: 14px;
+            transition: color 0.4s ease;
+        }
+
+        /* Theme Toggle Button */
+        .theme-btn {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-white);
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.08) rotate(15deg);
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(var(--accent-primary-rgb), 0.3);
+        }
+
+        .theme-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Module Form Cards Configuration */
+        .config-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.4s ease, border-color 0.4s ease;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-white);
+            margin-bottom: 10px;
+            transition: color 0.4s ease;
+        }
+
+        .form-control {
+            background: var(--bg-inner);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: white !important;
+            padding: 14px;
+            border-radius: 12px;
+            transition: all 0.4s ease;
+        }
+
+        .form-control:focus {
+            background: var(--bg-inner);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.15);
+        }
+
+        .btn-scan {
+            background: var(--accent-primary);
+            color: #000000;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: 12px;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-scan:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(var(--accent-primary-rgb), 0.3);
+            background: var(--accent-primary);
+            color: #000000;
+        }
+
+        /* Custom Adaptive Badging Framework */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .risk-low {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--color-low);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .risk-medium {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--color-medium);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        
+        .risk-high {
+            background: rgba(249, 115, 22, 0.15);
+            color: #f97316;
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+
+        .risk-critical {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--color-critical);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .alert {
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            padding: 16px 20px;
+        }
+
+        /* Checkbox Option Cards */
+        .scan-option-card {
+            background: var(--bg-inner);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 16px;
+            transition: all 0.4s ease;
+        }
+        
+        .scan-option-full {
+            background: rgba(var(--accent-primary-rgb), 0.08);
+            border: 1px solid rgba(var(--accent-primary-rgb), 0.2);
+            border-radius: 16px;
+            padding: 18px;
+            transition: all 0.4s ease;
+        }
+
+        .text-info { color: var(--accent-primary) !important; transition: color 0.4s ease; }
+        .bg-info-subtle { background-color: rgba(var(--accent-primary-rgb), 0.15) !important; border: 1px solid rgba(var(--accent-primary-rgb), 0.2); transition: all 0.4s ease; }
+        .border-info { border-color: var(--accent-primary) !important; }
+        .bg-orange { background-color: #f97316 !important; }
+        .text-orange { color: #f97316 !important; }
+
+        /* =========================================
+           NEW MODERN DASHBOARD COMPONENTS
+           ========================================= */
+        
+        /* Stat Cards */
+        .stat-card {
+            background: var(--bg-inner);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(var(--accent-primary-rgb), 0.3);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .stat-card h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            letter-spacing: -1px;
+        }
+        .stat-card p {
+            color: var(--text-white);
+            font-size: 0.85rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* Collapsible Accordion Configuration */
+        .accordion-item {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px !important;
+            margin-bottom: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .accordion-button {
+            background: var(--bg-card) !important;
+            color: #fff !important;
+            box-shadow: none !important;
+            padding: 20px 24px;
+            transition: background-color 0.3s ease;
+        }
+        .accordion-button:not(.collapsed) {
+            background: var(--bg-inner) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .accordion-button::after { filter: invert(1) brightness(200%); }
+        .accordion-body {
+            background: var(--bg-main);
+            padding: 24px;
+            color: #e2e8f0;
+        }
+
+        /* Detail Blocks inside Accordion */
+        .detail-section {
+            background: var(--bg-inner);
+            border: 1px solid rgba(255,255,255,0.03);
+            border-radius: 14px;
+            padding: 24px;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+        .detail-section:hover {
+            border-color: rgba(255,255,255,0.08);
+        }
+        .detail-section h5 {
+            color: var(--text-white);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 12px;
+            font-weight: 700;
+        }
+        
+        .progress-container {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            height: 8px;
+            width: 100%;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .progress-bar-custom {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s ease-in-out;
+        }
+
+        .cve-item {
+            background: rgba(0,0,0,0.3);
+            border-left: 3px solid;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+        .cve-item:hover { transform: translateX(4px); }
+
+        /* Banner Cards */
+        .banner-card {
+            background: var(--bg-inner);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px;
+            padding: 24px;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+        .banner-card:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            border-color: rgba(var(--accent-primary-rgb), 0.2);
+        }
+        .banner-content {
+            background: rgba(0,0,0,0.4);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: monospace;
+            color: var(--color-medium);
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* Scrollbar styles for inner elements */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        @media(max-width: 992px) {
+            .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+            .main-content { margin-left: 0; padding: 20px; }
+            .topbar { flex-direction: column; align-items: flex-start; gap: 20px; }
+            .accordion-button { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo">
+        <i class="bi bi-shield-lock-fill"></i> SURAKSHA
+    </div>
+    <a href="/dashboard">
+        <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a href="/network-scan" class="active-link">
+        <i class="bi bi-router"></i> Network Scan
+    </a>
+    <a href="/web-scan">
+        <i class="bi bi-globe"></i> Web Scan
+    </a>
+    <a href="/ssl-check">
+        <i class="bi bi-shield-lock"></i> SSL Checker
+    </a>
+    <a href="/reports">
+        <i class="bi bi-file-earmark-bar-graph"></i> Reports
+    </a>
+    <a href="/logout" class="mt-5 text-danger">
+        <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+</div>
+
+<div class="main-content">
+    <div class="topbar">
+        <div>
+            <h1>Network Vulnerability Scanner</h1>
+        </div>
+        <div class="d-flex align-items-center gap-3"></div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if "Scan" in message %}
+                <div class="alert mt-2 mb-4 d-flex align-items-center gap-3 border-start border-3 border-info">
+                    <i class="bi bi-info-circle-fill text-info fs-5"></i>
+                    <div>{{ message }}</div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="config-card">
+        <form method="POST">
+            <div class="mb-4">
+                <label class="form-label">Enter Target Host IP / Domain</label>
+                <div class="input-group">
+                    <input type="text" name="target" class="form-control" placeholder="scanme.nmap.org" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Select Scan Type</label>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <div class="scan-option-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="scan_options" value="port">
+                                <label class="form-check-label text-white">
+                                    <i class="bi bi-hdd-network text-info me-2"></i> Port Scan
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="scan-option-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="scan_options" value="banner">
+                                <label class="form-check-label text-white">
+                                    <i class="bi bi-broadcast text-info me-2"></i> Banner Grabbing
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="scan-option-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="scan_options" value="service">
+                                <label class="form-check-label text-white">
+                                    <i class="bi bi-diagram-3 text-info me-2"></i> Service Detection
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="scan-option-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="scan_options" value="version">
+                                <label class="form-check-label text-white">
+                                    <i class="bi bi-cpu text-info me-2"></i> Version Detection
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="scan-option-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="scan_options" value="os">
+                                <label class="form-check-label text-white">
+                                    <i class="bi bi-pc-display text-info me-2"></i> OS Detection
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="scan-option-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="scan_options" value="vuln">
+                                <label class="form-check-label text-white">
+                                    <i class="bi bi-bug text-danger me-2"></i> Vulnerability Scripts
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="scan-option-full">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="full_scan" name="scan_options" value="full">
+                                <label class="form-check-label text-info fw-bold">
+                                    <i class="bi bi-lightning-charge me-2"></i> Full Scan (Select All)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-scan" type="submit">
+                <i class="bi bi-search me-2"></i> Start Network Scan
+            </button>
+        </form>
+    </div>
+
+
+
+    {% if target %}
+    <div class="row g-4 mb-5">
+        <div class="col-12 col-xl-6">
+            <div class="config-card mb-0 h-100 p-4">
+                <h4 class="mb-4 text-white font-weight-bold d-flex align-items-center">
+                    <i class="bi bi-shield-check text-info fs-3 me-3"></i> Executive Scan Summary
+                </h4>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 rounded h-100 d-flex flex-column" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.03); word-break: break-word; overflow-wrap: break-word;">
+                            <p class="text-warning small text-uppercase mb-1">Target Identity</p>
+                            <a href="https://{{ target }}" target="_blank" class="text-info font-monospace text-decoration-none fs-6 d-block" style="word-break: break-all;">{{ target }}</a>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 rounded h-100 d-flex flex-column" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.03);">
+                            <p class="text-warning small text-uppercase mb-1">Execution Time</p>
+                            <span class="text-white fs-6 mt-auto">{{ scan_time|default('Just Now') }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 rounded h-100 d-flex flex-column" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.03);">
+                            <p class="text-warning small text-uppercase mb-1">Server Ecosystem</p>
+                            <span class="text-white fs-6 fw-bold mt-auto">{{ server_ecosystem|default('Unknown') }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 rounded h-100 d-flex flex-column" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.03);">
+                            <p class="text-warning small text-uppercase mb-1">Assessed Risk Status</p>
+                            <span class="risk-badge 
+                                {% if risk_level and risk_level|lower == 'low' %} risk-low
+                                {% elif risk_level and risk_level|lower == 'medium' %} risk-medium
+                                {% else %} risk-critical {% endif %}">
+                                {{ risk_level|default('Pending') }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if scan_results %}
+
+        <div class="col-12 col-xl-6">
+            <div class="row g-4 h-100">
+                <div class="col-6 col-md-4">
+                    <div class="stat-card">
+                        <h2 class="text-info">{{ metrics.total_ports }}</h2>
+                        <p>Open Ports</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="stat-card">
+                        <h2 class="text-white">{{ metrics.unique_services }}</h2>
+                        <p>Services</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="stat-card">
+                        <h2 class="text-white">{{ metrics.unique_products }}</h2>
+                        <p>Products</p>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="stat-card">
+                        <h2 class="text-danger">{{ metrics.critical_issues }}</h2>
+                        <p>Critical Issues</p>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="stat-card">
+                        <h2 class="text-warning">{{ metrics.known_cves }}</h2>
+                        <p>Known CVEs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if scan_results %}
+    <div class="mb-5">
+        <div class="d-flex align-items-center mb-4">
+            <h3 class="mb-0 text-white"><i class="bi bi-bezier2 text-info me-2"></i> Vulnerability Assessment Details</h3>
+        </div>
+
+        <div class="accordion" id="portResultsAccordion">
+            {% for result in scan_results %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-{{ loop.index }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ loop.index }}" aria-expanded="false" aria-controls="collapse-{{ loop.index }}">
+                        <div class="d-flex flex-wrap align-items-center gap-3 w-100 pe-3">
+                            <span class="badge bg-dark border border-info text-info fs-6 px-3 py-2">PORT {{ result.port }}</span>
+                            <span class="badge bg-success bg-opacity-10 text-success">{{ result.protocol|upper }}</span>
+                            <strong class="text-white fs-5 ms-2">{{ result.service|upper }}</strong>
+                            
+                            {% if result.product %}
+                                <span class="text-white ms-md-2 d-none d-md-inline">{{ result.product }} {{ result.version }}</span>
+                            {% endif %}
+                            
+                            <div class="ms-auto d-flex align-items-center gap-3">
+                                {% if result.cves and result.cves|length > 0 %}
+                                    <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-50 px-2 py-1">
+                                        <i class="bi bi-bug-fill me-1"></i> {{ result.cves|length }} CVEs
+                                    </span>
+                                {% endif %}
+                                <span class="risk-badge 
+                                    {% if result.ai_risk|lower == 'low' %} risk-low
+                                    {% elif result.ai_risk|lower == 'medium' %} risk-medium
+                                    {% elif result.ai_risk|lower == 'high' %} risk-high
+                                    {% else %} risk-critical {% endif %}">
+                                    {{ result.ai_risk|default('Unknown Risk') }}
+                                </span>
+                            </div>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ loop.index }}" data-bs-parent="#portResultsAccordion">
+                    <div class="accordion-body">
+                        <div class="row g-4">
+                            
+                            <div class="col-xl-4 col-md-6">
+                                <div class="detail-section h-100">
+                                    <h5><i class="bi bi-fingerprint me-2"></i> Fingerprint</h5>
+                                    <div class="d-flex flex-column gap-2 mt-4">
+                                        <div class="d-flex justify-content-between border-bottom border-secondary pb-2">
+                                            <span class="text-white-50">State</span>
+                                            <span class="badge bg-success bg-opacity-25 text-success">{{ result.state }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between border-bottom border-secondary pb-2">
+                                            <span class="text-white-50">Protocol</span>
+                                            <span class="font-monospace text-white">{{ result.protocol }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between border-bottom border-secondary pb-2">
+                                            <span class="text-white-50">Service</span>
+                                            <span class="fw-bold text-white">{{ result.service }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between border-bottom border-secondary pb-2">
+                                            <span class="text-white-50">Product</span>
+                                            {% if result.product and result.product != 'Unknown' %}
+                                                <span class="text-white">{{ result.product }}</span>
+                                            {% else %}
+                                                <span class="text-muted">Unknown</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="d-flex justify-content-between border-bottom border-secondary pb-2">
+                                            <span class="text-white-50">Version</span>
+                                            {% if result.version and result.version != 'Not Detected' %}
+                                                <span class="text-warning font-monospace">{{ result.version }}</span>
+                                            {% else %}
+                                                <span class="text-muted">Not Detected</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="d-flex justify-content-between border-bottom border-secondary pb-2">
+                                            <span class="text-white-50">Extra</span>
+                                            {% if result.extra_info %}
+                                                <span class="text-info font-monospace small">{{ result.extra_info }}</span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </div>
+                                        {% if result.cpe %}
+                                        <div class="d-flex justify-content-between pb-2">
+                                            <span class="text-white-50">CPE</span>
+                                            <span class="text-info font-monospace small" style="word-break: break-all; text-align: right; max-width: 200px;">{{ result.cpe }}</span>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if result.web_service and result.web_service.found %}
+                                        <div class="mt-3">
+                                            <h6 class="text-info mb-2"><i class="bi bi-globe me-2"></i> Web Service Detected</h6>
+                                            <div class="d-flex flex-column gap-2">
+                                                <div class="d-flex justify-content-between border-bottom border-secondary pb-1">
+                                                    <span class="text-white-50">URL</span>
+                                                    <a href="{{ result.web_service.url }}" target="_blank" class="text-info small text-decoration-none" style="word-break: break-all;">{{ result.web_service.url }}</a>
+                                                </div>
+                                                <div class="d-flex justify-content-between border-bottom border-secondary pb-1">
+                                                    <span class="text-white-50">Status</span>
+                                                    <span class="badge bg-success">{{ result.web_service.status }}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between pb-1">
+                                                    <span class="text-white-50">Title</span>
+                                                    <span class="text-white small text-truncate" style="max-width: 150px;" title="{{ result.web_service.title }}">{{ result.web_service.title }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-4 col-md-6">
+                                <div class="detail-section h-100">
+                                    <h5><i class="bi bi-robot me-2"></i> AI Assessment Engine</h5>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+                                        <span class="text-white-50">Risk</span>
+                                        <span class="risk-badge 
+                                        {% if result.ai_risk|lower == 'low' %} risk-low
+                                        {% elif result.ai_risk|lower == 'medium' %} risk-medium
+                                        {% elif result.ai_risk|lower == 'high' %} risk-high
+                                        {% else %} risk-critical {% endif %}">
+                                            {{ result.ai_risk }}
+                                        </span>
+                                    </div>
+
+                                    <div class="mb-2 d-flex justify-content-between">
+                                        <span class="text-white-50">Model Confidence</span>
+                                        <strong class="text-success">{{ result.confidence }}%</strong>
+                                    </div>
+                                    <div class="progress-container mb-4" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                                        <div class="progress-bar-custom bg-success h-100" style="width: {{ result.confidence }}%;"></div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-4">
+                                        <span class="text-white-50">Algorithm</span>
+                                        <span class="badge bg-primary bg-opacity-25 text-primary border border-primary px-2 py-1">{{ result.algorithm }}</span>
+                                    </div>
+
+                                    {% if result.protocol_analysis %}
+                                    <div class="mt-4 p-3 rounded" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.03);">
+                                        <strong class="text-info d-block mb-2">{{ result.protocol_analysis.protocol }}</strong>
+                                        <small class="text-white-50 d-block mb-3">{{ result.protocol_analysis.description }}</small>
+                                        <small class="text-warning d-block border-top border-secondary pt-2">{{ result.protocol_analysis.recommendation }}</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-xl-4 col-md-12">
+                                <div class="detail-section h-100">
+                                    <h5><i class="bi bi-shield-x me-2"></i> Known Vulnerabilities</h5>
+                                    
+                                    {% if result.cves and result.cves|length > 0 %}
+                                        <div class="mt-4 mb-3">
+                                            <span class="badge bg-danger fs-6 px-3 py-2 border border-danger bg-opacity-25 text-danger"><i class="bi bi-bug-fill me-1"></i> {{ result.cves|length }} CVEs Found</span>
+                                        </div>
+                                        <div style="max-height: 240px; overflow-y: auto; padding-right: 5px;">
+                                            {% for cve in result.cves %}
+                                                <div class="cve-item p-3 mb-2 rounded bg-dark border 
+                                                    {% if cve.severity|lower == 'critical' %}border-danger
+                                                    {% elif cve.severity|lower == 'high' %}border-orange
+                                                    {% elif cve.severity|lower == 'medium' %}border-warning
+                                                    {% else %}border-info{% endif %}">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <span class="badge 
+                                                            {% if cve.severity|lower == 'critical' %}bg-danger
+                                                            {% elif cve.severity|lower == 'high' %}bg-orange
+                                                            {% elif cve.severity|lower == 'medium' %}bg-warning text-dark
+                                                            {% else %}bg-info text-dark{% endif %} me-2">
+                                                            {{ cve.severity }}
+                                                        </span>
+                                                        <strong class="font-monospace text-white">{{ cve.cve }}</strong>
+                                                    </div>
+                                                    <p class="small text-white-50 mb-0 lh-sm">{{ cve.description }}</p>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <div class="h-100 d-flex flex-column justify-content-center align-items-center opacity-75 mt-4 pb-4">
+                                            <i class="bi bi-shield-check text-success" style="font-size: 2.5rem;"></i>
+                                            <p class="mt-3 text-center text-white fw-bold mb-1">No matching CVEs found.</p>
+                                            <small class="text-warning text-center">This does not guarantee the service is vulnerability-free.</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if result.scripts %}
+                            <div class="col-12">
+                                <div class="detail-section h-100">
+                                    <h5 class="text-warning mb-3"><i class="bi bi-bug me-2"></i> Vulnerability Script Results</h5>
+                                    <div class="row g-3">
+                                        {% for script_name, script_output in result.scripts.items() %}
+                                        <div class="col-12">
+                                            <div class="bg-dark p-3 rounded border border-secondary border-opacity-25">
+                                                <h6 class="text-info font-monospace mb-2">{{ script_name }}</h6>
+                                                <pre class="text-white-50 mb-0 small" style="white-space: pre-wrap; font-family: monospace;">{{ script_output }}</pre>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not scan_results and target %}
+    <div class="mt-4 p-4 rounded" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255, 193, 7, 0.3);">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <i class="bi bi-exclamation-triangle-fill text-warning fs-4"></i>
+            <h5 class="text-white m-0">No Open TCP Ports Detected</h5>
+        </div>
+        <div class="row g-3">
+            {% if host_status is defined and host_status %}
+            <div class="col-md-4">
+                <span class="text-muted small text-uppercase d-block mb-1">Host Status</span>
+                <span class="text-white fw-bold">{{ host_status|upper }}</span>
+            </div>
+            {% endif %}
+            {% if resolved_ip is defined and resolved_ip %}
+            <div class="col-md-4">
+                <span class="text-muted small text-uppercase d-block mb-1">Resolved IP</span>
+                <span class="font-monospace text-info">{{ resolved_ip }}</span>
+            </div>
+            {% endif %}
+            <div class="col-md-4">
+                <span class="text-muted small text-uppercase d-block mb-1">Open Ports</span>
+                <span class="text-white fw-bold">0</span>
+            </div>
+        </div>
+        <p class="text-white-50 small mt-3 mb-0">
+            No open TCP ports were available for service/version detection. 
+            The target host may be behind a firewall, WAF, or filtering device that is blocking the scan probes. 
+            This does not necessarily mean the host is down.
+        </p>
+    </div>
+    {% endif %}
+
+    {% if os_details is defined and os_details %}
+    <div class="mt-5 mb-5">
+        <h3 class="mb-4 text-white"><i class="bi bi-pc-display text-info me-2"></i> OS Detection</h3>
+        <div class="row g-4">
+            {% for os in os_details %}
+            <div class="col-md-6 col-xl-4">
+                <div class="detail-section p-4 h-100 bg-dark rounded border border-secondary border-opacity-25">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-white fs-6 fw-bold">{{ os.name }}</span>
+                        <span class="badge bg-success bg-opacity-25 text-success">{{ os.accuracy }}% Accuracy</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if banner_results %}
+    <div class="mt-5 mb-5">
+        <h3 class="mb-4 text-white"><i class="bi bi-broadcast-pin text-info me-2"></i> Banner Intelligence</h3>
+        <div class="row g-4">
+            {% for banner in banner_results %}
+            <div class="col-md-6 col-xl-4">
+                <div class="banner-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-dark border border-info text-info fs-6 px-3">PORT {{ banner.port }}</span>
+                        <span class="badge bg-info-subtle text-info text-uppercase px-2 py-1"><i class="bi bi-hdd-network me-1"></i> {{ banner.service }}</span>
+                    </div>
+                    <div class="banner-content">
+                        {{ banner.banner }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const fullScan = document.getElementById("full_scan");
+    const optionChecks = document.querySelectorAll('input[name="scan_options"]:not(#full_scan)');
+
+    fullScan.addEventListener("change", function() {
+        optionChecks.forEach(check => {
+            check.checked = this.checked;
+        });
+        updateFullScanState();
+    });
+
+    optionChecks.forEach(check => {
+        check.addEventListener("change", function() {
+            const allChecked = Array.from(optionChecks).every(c => c.checked);
+            fullScan.checked = allChecked;
+            updateFullScanState();
+        });
+    });
+
+    function updateFullScanState() {
+        const label = fullScan.nextElementSibling;
+        if (fullScan.checked) {
+            label.innerHTML = '<i class="bi bi-lightning-charge-fill me-2"></i> Full Scan Active';
+            label.classList.replace("text-info", "text-success");
+        } else {
+            label.innerHTML = '<i class="bi bi-lightning-charge me-2"></i> Full Scan (Select All)';
+            label.classList.replace("text-success", "text-info");
+        }
+    }
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if(!Array.from(optionChecks).some(c => c.checked) && !fullScan.checked) return;
+        
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100vw';
+        overlay.style.height = '100vh';
+        overlay.style.backgroundColor = 'rgba(0,0,0,0.9)';
+        overlay.style.zIndex = '9999';
+        overlay.style.display = 'flex';
+        overlay.style.flexDirection = 'column';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.color = 'white';
+        overlay.style.fontFamily = 'monospace';
+        
+        overlay.innerHTML = `
+            <div class="spinner-border text-danger mb-4" style="width: 4rem; height: 4rem;" role="status"></div>
+            <h3 class="text-white mb-3">Assessment in Progress</h3>
+            <div id="progress-text" class="text-info fs-5 text-center" style="min-height: 30px;"></div>
+        `;
+        document.body.appendChild(overlay);
+
+        const stages = ["Initializing network scan..."];
+        const opts = Array.from(optionChecks).filter(c => c.checked).map(c => c.value);
+        if(opts.includes('port')) stages.push("Running port discovery...");
+        if(opts.includes('service') || opts.includes('version')) stages.push("Detecting services and versions...");
+        if(opts.includes('os')) stages.push("Performing OS detection...");
+        if(opts.includes('banner')) stages.push("Capturing banners...");
+        if(opts.includes('vuln')) stages.push("Running vulnerability scripts...");
+        stages.push("Analyzing protocols...");
+        stages.push("Mapping CVEs...");
+        stages.push("Running AI per-port assessment...");
+        stages.push("Generating final report...");
+
+        let i = 0;
+        const progressEl = document.getElementById('progress-text');
+        progressEl.innerText = stages[i];
+        
+        setInterval(() => {
+            if(i < stages.length - 1) {
+                i++;
+                progressEl.innerText = stages[i];
+            }
+        }, 12000); // cycle messages slowly as nmap is synchronous and blocks
+    });
+
+    // Theme logic preservation
+    const themeBtn = document.getElementById("themeBtn");
+    if (themeBtn) {
+        themeBtn.addEventListener("click", () => {
+            const currentTheme = document.documentElement.getAttribute("data-theme");
+            const newTheme = currentTheme === "red" ? "blue" : "red";
+            if (newTheme === "red") {
+                document.documentElement.setAttribute("data-theme", "red");
+            } else {
+                document.documentElement.removeAttribute("data-theme");
+            }
+            localStorage.setItem("theme", newTheme);
+        });
+    }
+
+    window.addEventListener("storage", (event) => {
+        if (event.key !== "theme") return;
+        if (event.newValue === "red") {
+            document.documentElement.setAttribute("data-theme", "red");
+        } else {
+            document.documentElement.removeAttribute("data-theme");
+        }
+    });
+</script>
+
+</body>
+</html>

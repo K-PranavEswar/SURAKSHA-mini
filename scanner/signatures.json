@@ -1,0 +1,120 @@
+{
+  "sql_patterns": [
+    "sql syntax",
+    "mysql_fetch",
+    "mysql_num_rows",
+    "sqlstate",
+    "syntax error",
+    "database error",
+    "warning: mysql",
+    "ora-",
+    "unclosed quotation mark",
+    "postgresql error",
+    "sqlite error",
+    "microsoft ole db provider",
+    "odbc sql server driver",
+    "native client",
+    "mysql server version",
+    "supplied argument is not a valid mysql",
+    "you have an error in your sql syntax",
+    "fatal error",
+    "unexpected end of sql command",
+    "pg_query()"
+  ],
+
+  "xss_patterns": [
+    "<script>",
+    "</script>",
+    "alert(",
+    "onerror=",
+    "onload=",
+    "javascript:",
+    "document.cookie",
+    "eval(",
+    "prompt(",
+    "confirm(",
+    "svg/onload",
+    "<img",
+    "<iframe",
+    "<svg"
+  ],
+
+  "security_headers": [
+    "X-Frame-Options",
+    "Content-Security-Policy",
+    "Strict-Transport-Security",
+    "X-Content-Type-Options",
+    "Referrer-Policy",
+    "Permissions-Policy",
+    "Access-Control-Allow-Origin"
+  ],
+
+  "sensitive_paths": [
+    "/admin",
+    "/administrator",
+    "/login",
+    "/dashboard",
+    "/config",
+    "/backup",
+    "/db",
+    "/database",
+    "/phpmyadmin",
+    "/server-status",
+    "/robots.txt",
+    "/sitemap.xml",
+    "/.env",
+    "/.git",
+    "/wp-admin",
+    "/wp-login.php",
+    "/api",
+    "/graphql",
+    "/swagger",
+    "/debug"
+  ],
+
+  "server_patterns": [
+    "Apache",
+    "Nginx",
+    "IIS",
+    "LiteSpeed",
+    "Gunicorn",
+    "Node.js",
+    "Express",
+    "Werkzeug",
+    "Tomcat"
+  ],
+
+  "cms_patterns": {
+    "WordPress": [
+      "wp-content",
+      "wp-includes"
+    ],
+    "Laravel": [
+      "laravel_session",
+      "csrf-token"
+    ],
+    "Django": [
+      "csrftoken",
+      "__admin__"
+    ],
+    "React": [
+      "react-root",
+      "__REACT_DEVTOOLS_GLOBAL_HOOK__"
+    ],
+    "Angular": [
+      "ng-version"
+    ],
+    "Vue": [
+      "data-v-"
+    ]
+  },
+
+  "risk_weights": {
+    "missing_header": 1,
+    "sensitive_path": 2,
+    "server_disclosure": 2,
+    "sql_indicator": 5,
+    "xss_indicator": 4,
+    "https_disabled": 3
+  }
+}

@@ -1,0 +1,68 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Suraksha | Superadmin Profile{% endblock %}
+{% block page_title %}Admin Profile{% endblock %}
+{% block page_subtitle %}Administrator Configuration & Profile{% endblock %}
+
+{% block topbar_profile %}{% endblock %}
+
+
+{% block content %}
+
+
+
+<!-- Edit Admin Credentials Card -->
+<div class="d-flex align-items-center mb-3" id="edit-credentials">
+    <h5 class="fw-bold mb-0 text-white">Profile Settings</h5>
+</div>
+<div class="card-box mb-4">
+    <div class="d-flex align-items-center gap-2 mb-2">
+        <i class="bi bi-person-gear text-danger fs-5"></i>
+        <h5 class="mb-0 text-white">Edit Credentials</h5>
+    </div>
+
+    <form method="POST" action="/admin/profile">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label class="form-label text-white-50 fw-semibold" style="font-size: 0.85rem;">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" name="username" class="form-control" value="{{ admin_user.username }}" required>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label text-white-50 fw-semibold" style="font-size: 0.85rem;">Email Address</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                    <input type="email" class="form-control" value="{{ admin_user.email }}" readonly>
+                    <span class="input-group-text border-start-0" title="Email cannot be changed"><i
+                            class="bi bi-lock text-muted"></i></span>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label text-white-50 fw-semibold" style="font-size: 0.85rem;">New Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-key"></i></span>
+                    <input type="password" name="password" class="form-control"
+                        placeholder="Leave blank to keep current password">
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between pt-4 mt-4 border-top"
+            style="border-color: rgba(255, 255, 255, 0.05) !important;">
+            <div class="d-flex gap-3">
+                <button type="button" class="btn btn-outline-secondary px-4 py-2 rounded-3"
+                    onclick="window.location.reload();">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary-red px-4 py-2 rounded-3 shadow-sm">
+                    <i class="bi bi-check2-circle me-2"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

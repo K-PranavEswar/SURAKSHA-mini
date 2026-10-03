@@ -1,0 +1,259 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Suraksha | Admin Dashboard{% endblock %}
+{% block page_title %}Welcome, {{ current_user.username if current_user.is_authenticated else 'Superadmin' }}{% endblock %}
+{% block page_subtitle %}Cybersecurity Vulnerability Dashboard{% endblock %}
+
+{% block content %}
+<!-- Metric Segment Grid Blocks (Highlighted Distinct Categories) -->
+<div class="row g-4 mb-4">
+    <!-- Distinct Highlight: Admin Only User Metric -->
+    <div class="col-md-3">
+        <div class="dashboard-card users-card" style="border-color: rgba(0, 229, 255, 0.3); box-shadow: 0 8px 25px rgba(0, 229, 255, 0.08);">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="badge" style="background: rgba(0, 229, 255, 0.15); color: #00e5ff; border: 1px solid rgba(0, 229, 255, 0.35); font-size: 10px; padding: 4px 8px;">ADMIN EXCLUSIVE</span>
+                <i class="bi bi-people-fill" style="color: #00e5ff; font-size: 18px;"></i>
+            </div>
+            <h2 style="color: #00e5ff; text-shadow: 0 0 25px rgba(0, 229, 255, 0.35);">{{ total_users }}</h2>
+            <p>Total Users</p>
+        </div>
+    </div>
+
+    <!-- Scans Metric -->
+    <div class="col-md-3">
+        <div class="dashboard-card scans-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="badge" style="background: rgba(255, 0, 60, 0.12); color: var(--accent-primary); border: 1px solid rgba(255, 0, 60, 0.25); font-size: 10px; padding: 4px 8px;">PLATFORM AUDIT</span>
+                <i class="bi bi-radar" style="color: var(--accent-primary); font-size: 18px;"></i>
+            </div>
+            <h2>{{ total_scans }}</h2>
+            <p>Total Scans</p>
+        </div>
+    </div>
+
+    <!-- Distinct Highlight: Critical Vulnerabilities (Red Alert) -->
+    <div class="col-md-3">
+        <div class="dashboard-card critical-card" {% if critical_scans > 0 %}style="border-color: rgba(255, 59, 59, 0.35); box-shadow: 0 8px 25px rgba(255, 59, 59, 0.15);"{% endif %}>
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ff3b3b; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 10px; padding: 4px 8px;">HIGH THREAT</span>
+                <i class="bi bi-exclamation-octagon-fill" style="color: #ff3b3b; font-size: 18px;"></i>
+            </div>
+            <h2 style="color: #ff3b3b; text-shadow: 0 0 20px rgba(255, 59, 59, 0.3);">{{ critical_scans }}</h2>
+            <p>Critical Vulnerabilities</p>
+        </div>
+    </div>
+
+    <!-- Reports Metric -->
+    <div class="col-md-3">
+        <div class="dashboard-card reports-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="badge" style="background: rgba(168, 85, 247, 0.12); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.25); font-size: 10px; padding: 4px 8px;">AUDIT ARCHIVE</span>
+                <i class="bi bi-file-earmark-check-fill" style="color: #c084fc; font-size: 18px;"></i>
+            </div>
+            <h2>{{ total_reports }}</h2>
+            <p>Reports Generated</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Controls Strip (Identical to Users Dashboard) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <a href="/admin/users" class="btn quick-action">
+            <i class="bi bi-people"></i> Manage Users
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="/admin/reports" class="btn quick-action">
+            <i class="bi bi-file-earmark-bar-graph"></i> View Reports
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="/admin/export-statement" class="btn quick-action">
+            <i class="bi bi-file-earmark-arrow-down"></i> Export Statement
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="/admin/profile" class="btn quick-action">
+            <i class="bi bi-person-gear"></i> Admin Profile
+        </a>
+    </div>
+</div>
+
+<!-- Two-Column Lower Workspace: Recent Scans + Vulnerability Overview Donut Chart -->
+<div class="row g-4">
+    <!-- Left Column: Recent Scan Activity Table (Dark Theme with Highlighted Badges) -->
+    <div class="col-xl-7">
+        <div class="table-box">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h4 class="mb-0">Recent Scan Activity</h4>
+                <a href="/admin/reports" class="text-decoration-none" style="color: var(--accent-primary); font-size: 13px; font-weight: 500;">
+                    View All <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>TARGET</th>
+                            <th>TYPE</th>
+                            <th>RISK</th>
+                            <th>PRIORITY</th>
+                            <th>DATE</th>
+                            <th class="text-end">ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scan in recent_scans %}
+                        <tr>
+                            <td>
+                                <span class="font-monospace text-truncate d-inline-block" style="color: #ffffff; max-width: 220px; font-weight: 500;" title="{{ scan.target }}">
+                                    <i class="bi bi-globe me-2 text-danger"></i>{{ scan.target }}
+                                </span>
+                            </td>
+                            <td>
+                                {% set stype = scan.scan_type|lower if scan.scan_type else '' %}
+                                {% if 'web' in stype %}
+                                <span class="badge badge-web"><i class="bi bi-globe me-1"></i>Web</span>
+                                {% elif 'ssl' in stype %}
+                                <span class="badge badge-ssl"><i class="bi bi-shield-check me-1"></i>SSL</span>
+                                {% else %}
+                                <span class="badge badge-network"><i class="bi bi-router me-1"></i>Network</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set sev = scan.severity|lower if scan.severity else 'none' %}
+                                {% if sev == 'critical' %}
+                                <span class="badge risk-critical"><i class="bi bi-exclamation-octagon-fill me-1"></i>Critical</span>
+                                {% elif sev == 'high' %}
+                                <span class="badge risk-high"><i class="bi bi-exclamation-triangle-fill me-1"></i>High</span>
+                                {% elif sev == 'medium' %}
+                                <span class="badge risk-medium"><i class="bi bi-dash-circle-fill me-1"></i>Medium</span>
+                                {% elif sev == 'low' %}
+                                <span class="badge risk-low"><i class="bi bi-check-circle-fill me-1"></i>Low</span>
+                                {% else %}
+                                <span class="badge text-secondary border border-secondary">{{ scan.severity or 'None' }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set p = scan.priority|lower if scan.priority else 'p6' %}
+                                {% if p == 'p1' %}
+                                <span class="badge priority-p1">P1</span>
+                                {% elif p == 'p2' %}
+                                <span class="badge priority-p2">P2</span>
+                                {% elif p == 'p3' %}
+                                <span class="badge priority-p3">P3</span>
+                                {% elif p == 'p4' %}
+                                <span class="badge priority-p4">P4</span>
+                                {% else %}
+                                <span class="badge priority-p5">{{ scan.priority }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="font-monospace" style="color: #94a3b8; font-size: 13px;">{{ scan.created_at }}</span>
+                            </td>
+                            <td class="text-end">
+                                <a href="/admin/report/{{ scan.id }}" class="btn btn-sm btn-view-scan" title="View Full Report">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-shield-check display-6 d-block mb-2 text-muted"></i>
+                                No recent scan activity found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Vulnerability Overview Chart (Exact match to users dashboard) -->
+    <div class="col-xl-5">
+        <div class="chart-box d-flex flex-column justify-content-between">
+            <h4 class="mb-4">Vulnerability Overview</h4>
+            <div class="chart-container-wrapper">
+                <canvas id="riskChart"></canvas>
+            </div>
+            <div class="d-flex justify-content-around text-center mt-3 pt-3 border-top" style="border-color: rgba(255,255,255,0.05) !important;">
+                <div>
+                    <div class="fw-bold" style="color: #ef4444; font-size: 18px;">{{ critical_scans }}</div>
+                    <small class="text-muted" style="font-size: 11px; text-transform: uppercase;">Critical</small>
+                </div>
+                <div>
+                    <div class="fw-bold" style="color: #f97316; font-size: 18px;" id="highCountLabel">0</div>
+                    <small class="text-muted" style="font-size: 11px; text-transform: uppercase;">High</small>
+                </div>
+                <div>
+                    <div class="fw-bold" style="color: #f59e0b; font-size: 18px;" id="mediumCountLabel">0</div>
+                    <small class="text-muted" style="font-size: 11px; text-transform: uppercase;">Medium</small>
+                </div>
+                <div>
+                    <div class="fw-bold" style="color: #00c896; font-size: 18px;" id="lowCountLabel">0</div>
+                    <small class="text-muted" style="font-size: 11px; text-transform: uppercase;">Low</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Calculate severity distribution dynamically
+    const criticalCount = Number("{{ critical_scans | default(0) }}");
+    let highCount = 0;
+    let mediumCount = 0;
+    let lowCount = 0;
+
+    {% for scan in recent_scans %}
+        {% set sev = scan.severity|lower if scan.severity else '' %}
+        {% if sev == 'high' %}
+            highCount++;
+        {% elif sev == 'medium' %}
+            mediumCount++;
+        {% elif sev == 'low' %}
+            lowCount++;
+        {% endif %}
+    {% endfor %}
+
+    document.getElementById("highCountLabel").innerText = highCount;
+    document.getElementById("mediumCountLabel").innerText = mediumCount;
+    document.getElementById("lowCountLabel").innerText = lowCount;
+
+    // Initialize Chart.js Donut Chart (Exact match to users dashboard)
+    const ctx = document.getElementById("riskChart").getContext("2d");
+    new Chart(ctx, {
+        type: "doughnut",
+        data: {
+            labels: ["Critical", "High", "Medium", "Low"],
+            datasets: [{
+                data: [criticalCount, highCount, mediumCount, lowCount],
+                backgroundColor: ["#ef4444", "#f97316", "#f59e0b", "#00c896"],
+                borderWidth: 0,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#94a3b8',
+                        font: { family: "'Segoe UI', Arial, sans-serif", size: 12 },
+                        padding: 18
+                    }
+                }
+            },
+            cutout: '75%'
+        }
+    });
+</script>
+{% endblock %}

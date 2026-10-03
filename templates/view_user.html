@@ -1,0 +1,65 @@
+{% extends "admin_base.html" %}
+
+{% block title %}User Profile | Suraksha{% endblock %}
+{% block page_title %}User Profile{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="/admin/users" class="text-muted text-decoration-none fw-medium">
+        <i class="bi bi-arrow-left me-2"></i> Back to Users
+    </a>
+</div>
+
+<div class="card-box mb-4">
+    <div class="d-flex align-items-center">
+        <div class="rounded-circle d-flex align-items-center justify-content-center me-4" 
+             style="width: 80px; height: 80px; background: rgba(227,38,26,0.1); color: var(--primary-red); font-size: 32px; font-weight: bold;">
+            {{ user.username[0]|upper }}
+        </div>
+        <div>
+            <h3 class="fw-bold mb-1">{{ user.username }}</h3>
+            <div class="text-muted mb-2">ID: #{{ user.id }} | {{ user.email }}</div>
+            <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">Active User</span>
+        </div>
+    </div>
+</div>
+
+<div class="card-box">
+    <h5 class="fw-bold mb-4">Scan History ({{ scans|length }})</h5>
+    
+    {% if scans|length > 0 %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Target</th>
+                    <th>Type</th>
+                    <th>Risk Level</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for scan in scans %}
+                <tr>
+                    <td class="fw-medium">{{ scan.target }}</td>
+                    <td>{{ scan.scan_type }}</td>
+                    <td>
+                        {% set sev = scan.severity|lower if scan.severity else 'none' %}
+                        <span class="badge badge-severity {% if sev == 'critical' %}badge-critical{% elif sev == 'high' %}badge-high{% elif sev == 'medium' %}badge-medium{% elif sev == 'low' %}badge-low{% else %}badge-info{% endif %}">
+                            {{ scan.severity or 'None' }}
+                        </span>
+                    </td>
+                    <td class="text-muted">{{ scan.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
+        <p>This user has not performed any scans yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

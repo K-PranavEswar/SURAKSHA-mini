@@ -1,0 +1,152 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Manage Users | Suraksha{% endblock %}
+{% block page_title %}Users{% endblock %}
+
+{% block content %}
+<div class="card-box">
+    <form method="GET" class="mb-4">
+        <div class="row g-3">
+            <div class="col-md-9">
+                <input type="text" name="search" class="form-control" placeholder="Search username or email..." value="{{ request.args.get('search', '') }}">
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary-red w-100 h-100" type="submit">
+                    <i class="bi bi-search me-2"></i> Search
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td class="text-muted">#{{ user.id }}</td>
+                    <td class="fw-medium">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; background: rgba(var(--accent-primary-rgb), 0.15); color: var(--accent-primary); border: 1px solid rgba(var(--accent-primary-rgb), 0.3); font-weight: 700; font-size: 0.85rem;">
+                                {{ user.username[0]|upper }}
+                            </div>
+                            <span class="text-white">{{ user.username }}</span>
+                        </div>
+                    </td>
+                    <td class="text-muted">{{ user.email }}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-secondary me-2 view-user-btn" data-id="{{ user.id }}">
+                            <i class="bi bi-eye"></i> View
+                        </button>
+                        {% if user.email != "suraksha@admin.in" %}
+                        <a href="/admin/delete-user/{{ user.id }}" onclick="return confirm('Delete this user?')" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="userViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">User Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="modalBodyContent">
+                <div class="text-center py-3">
+                    <div class="spinner-border text-danger" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const userModal = new bootstrap.Modal(document.getElementById('userViewModal'));
+    const modalBody = document.getElementById('modalBodyContent');
+    const viewButtons = document.querySelectorAll('.view-user-btn');
+
+    viewButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+            const userId = button.getAttribute('data-id');
+            modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-danger" role="status"></div></div>';
+            userModal.show();
+
+            try {
+                const response = await fetch(`/api/user/${userId}`);
+                if (!response.ok) throw new Error("Failed to fetch");
+                const data = await response.json();
+
+                modalBody.innerHTML = `
+                    <!-- Profile Identity -->
+                    <div class="d-flex flex-column align-items-center mb-4">
+                        <div class="rounded-circle d-flex justify-content-center align-items-center mb-3 shadow-sm" 
+                             style="width: 72px; height: 72px; background: linear-gradient(135deg, var(--accent-primary), #ff4d4d); color: #fff; font-size: 28px; font-weight: 800;">
+                            ${data.username[0].toUpperCase()}
+                        </div>
+                        <h4 class="mb-2 fw-bold text-white">${data.username}</h4>
+                        <span class="badge mb-2" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.75rem; padding: 0.35rem 0.65rem;">
+                            <i class="bi bi-circle-fill me-1" style="font-size: 0.45rem; vertical-align: middle;"></i> Active
+                        </span>
+                        <div class="text-white small">User ID: #${data.id}</div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="mb-4">
+                        <div class="text-white fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 1px;">CONTACT INFORMATION</div>
+                        <div class="card-box bg-transparent border p-3 rounded-3" style="border-color: rgba(255,255,255,0.05) !important;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="d-flex justify-content-center align-items-center rounded-circle" style="width: 40px; height: 40px; background: rgba(255,255,255,0.05); color: var(--text-muted);">
+                                    <i class="bi bi-envelope fs-5"></i>
+                                </div>
+                                <div style="min-width: 0;">
+                                    <div class="text-white fw-semibold mb-1" style="font-size: 0.75rem;">Email Address</div>
+                                    <div class="text-white fw-semibold text-truncate" style="font-size: 0.95rem;">${data.email}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Information -->
+                    <div>
+                        <div class="text-white fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 1px;">ACCOUNT INFORMATION</div>
+                        <div class="card-box bg-transparent border p-3 rounded-3" style="border-color: rgba(255,255,255,0.05) !important;">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="text-white fw-semibold mb-1" style="font-size: 0.75rem;">Account Status</div>
+                                    <div class="text-white fw-semibold" style="font-size: 0.9rem;">
+                                        <i class="bi bi-shield-check text-success me-1"></i> Active
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-white fw-semibold mb-1" style="font-size: 0.75rem;">Joined On</div>
+                                    <div class="text-white fw-semibold" style="font-size: 0.9rem;">${data.created_at || 'N/A'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                modalBody.innerHTML = '<div class="text-danger text-center"><i class="bi bi-exclamation-triangle fs-1"></i><p>Error loading user.</p></div>';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

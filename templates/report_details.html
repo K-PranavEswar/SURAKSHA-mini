@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detailed Report - SURAKSHA</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            /* PREMIUM RED BLACK CYBER THEME */
+            --bg-base: #0B0B0B;
+            --bg-gradient: none; /* Flat black is more minimalistic */
+            --bg-card: #111111;
+            --bg-inner: #161616;
+            
+            --accent-primary: #E3261A;
+            --accent-glow: rgba(227, 38, 26, 0.25);
+            
+            --text-main: #FFFFFF;
+            --text-muted: #888888;
+            
+            --color-critical: #E3261A;
+            --color-medium: #f59e0b;
+            --color-low: #10b981;
+            
+            --border-subtle: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            transition: background 0.5s ease, color 0.5s ease;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Tech/Code Font class */
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace !important;
+            letter-spacing: -0.5px;
+        }
+
+        /* Custom Link Truncation */
+        .url-truncate {
+            display: inline-block;
+            max-width: 280px; /* Adjust this width based on your layout needs */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: bottom;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .url-truncate:hover {
+            color: var(--accent-primary) !important;
+        }
+
+        .url-truncate.expanded {
+            max-width: 100%;
+            white-space: normal;
+            word-break: break-all; /* Breaks long URLs properly */
+            cursor: default;
+            color: var(--accent-primary) !important;
+        }
+
+        /* Container Styling */
+        .report-box {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 45px;
+            margin-top: 40px;
+            margin-bottom: 40px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.7);
+            transition: all 0.4s ease;
+        }
+
+        .section-box {
+            background: var(--bg-inner);
+            border-radius: 8px;
+            padding: 30px;
+            margin-top: 24px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            
+            /* Animation triggers */
+            opacity: 0;
+            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        .section-box:hover {
+            border-color: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        /* Staggered Animations */
+        .section-box:nth-child(2) { animation-delay: 0.1s; }
+        .section-box:nth-child(3) { animation-delay: 0.2s; }
+        .section-box:nth-child(4) { animation-delay: 0.3s; }
+        .section-box:nth-child(5) { animation-delay: 0.4s; }
+
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-box hr {
+            border-color: rgba(255, 255, 255, 0.08);
+            margin: 20px 0;
+        }
+
+        .section-box h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .title {
+            color: #FFFFFF;
+            font-weight: 800;
+            letter-spacing: -1px;
+            text-shadow: none;
+        }
+        
+        .title i {
+            color: var(--accent-primary);
+            text-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .text-muted { color: var(--text-muted) !important; }
+        
+        /* Modern Back Button */
+        .btn-back {
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 8px 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-back:hover {
+            background: var(--accent-primary);
+            color: #000 !important;
+            border-color: var(--accent-primary);
+            box-shadow: 0 4px 15px var(--accent-glow);
+            transform: translateX(-3px);
+        }
+
+        /* Table Styling */
+        .table-responsive { 
+            border-radius: 8px; 
+            overflow: hidden; 
+            border: 1px solid var(--border-subtle); 
+            background: rgba(0, 0, 0, 0.4);
+        }
+        table { margin-bottom: 0 !important; background: transparent !important; }
+        table th {
+            font-size: 0.70rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted) !important;
+            font-weight: 700;
+            padding: 18px 24px !important;
+            background: #0B0B0B !important;
+            border-bottom: 1px solid var(--border-subtle) !important;
+        }
+        table td {
+            padding: 16px 24px !important;
+            font-size: 0.90rem;
+            border-bottom: 1px solid var(--border-subtle) !important;
+            background: transparent !important;
+            color: var(--text-main);
+            vertical-align: middle;
+            transition: background 0.2s ease;
+        }
+        table tbody tr:last-child td {
+            border-bottom: none !important;
+        }
+        table tbody tr:hover td {
+            background: rgba(227, 38, 26, 0.05) !important; /* Subtle red hover */
+        }
+
+        /* Adaptive Custom Badging Framework */
+        .badge { 
+            padding: 8px 14px; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            font-size: 0.75rem; 
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .risk-badge { 
+            display: inline-flex; 
+            align-items: center;
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            font-weight: 700; 
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .risk-low { background: rgba(16, 185, 129, 0.15); color: var(--color-low); border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.1); }
+        .risk-medium { background: rgba(245, 158, 11, 0.15); color: var(--color-medium); border: 1px solid rgba(245, 158, 11, 0.4); box-shadow: inset 0 0 10px rgba(245, 158, 11, 0.1); }
+        .risk-critical { background: rgba(227, 38, 26, 0.15); color: var(--color-critical); border: 1px solid rgba(227, 38, 26, 0.4); box-shadow: inset 0 0 10px rgba(227, 38, 26, 0.1); animation: pulseAlert 2s infinite; }
+
+        @keyframes pulseAlert {
+            0% { box-shadow: 0 0 0 0 rgba(227, 38, 26, 0.4), inset 0 0 10px rgba(227, 38, 26, 0.1); }
+            70% { box-shadow: 0 0 0 10px rgba(227, 38, 26, 0), inset 0 0 10px rgba(227, 38, 26, 0.1); }
+            100% { box-shadow: 0 0 0 0 rgba(227, 38, 26, 0), inset 0 0 10px rgba(227, 38, 26, 0.1); }
+        }
+
+        .bg-success-subtle { background-color: rgba(34, 197, 94, 0.15) !important; color: #4ade80 !important; border: 1px solid rgba(34, 197, 94, 0.3) !important; }
+        .bg-danger-subtle { background-color: rgba(227, 38, 26, 0.15) !important; color: #ff5c5c !important; border: 1px solid rgba(227, 38, 26, 0.3) !important; }
+        .bg-warning-subtle { background-color: rgba(245, 158, 11, 0.15) !important; color: #fbbf24 !important; border: 1px solid rgba(245, 158, 11, 0.3) !important; }
+        .bg-secondary-subtle { background-color: rgba(136, 136, 136, 0.15) !important; color: #cccccc !important; border: 1px solid rgba(136, 136, 136, 0.3) !important; }
+
+        /* Audit Lists styling */
+        .audit-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .audit-list li {
+            background: rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.3s ease;
+        }
+        
+        .audit-list li:hover {
+            background: rgba(255, 255, 255, 0.03);
+            transform: translateX(4px);
+        }
+
+        /* Specific left-borders for lists */
+        .border-left-warning { border-left: 4px solid #f59e0b !important; }
+        .border-left-danger { border-left: 4px solid #ef4444 !important; }
+    </style>
+</head>
+<body>
+
+<div class="container py-4">
+    <div class="report-box">
+        
+        <a href="/reports" class="btn btn-back">
+            <i class="bi bi-arrow-left me-2"></i> Back to Reports
+        </a>
+
+        <h2 class="title mt-4 mb-1">
+            <i class="bi bi-shield-check me-2"></i>Detailed Scan Report
+        </h2>
+        <p class="text-muted mb-4 ms-1 small">Comprehensive security analysis and vulnerability assessment.</p>
+
+        {% set details = scan.details|from_json %}
+
+        <div class="section-box">
+            <h4><i class="bi bi-info-circle text-muted me-2"></i> Scan Information</h4>
+            <hr>
+            <div class="row g-4 mt-2">
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded h-100" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle);">
+                        <span class="text-muted small text-uppercase tracking-wide d-block mb-2">Target</span>
+                        <span class="font-mono fs-6 text-white url-truncate" 
+                              onclick="this.classList.add('expanded')" 
+                              onmouseleave="this.classList.remove('expanded')"
+                              title="Click to view full target link">
+                            {{ scan.target }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded h-100" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle);">
+                        <span class="text-muted small text-uppercase tracking-wide d-block mb-2">Scan Type</span>
+                        <span class="badge bg-secondary-subtle px-3 py-2 fs-6 text-white border border-secondary">{{ scan.scan_type }}</span>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded h-100" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle);">
+                        <span class="text-muted small text-uppercase tracking-wide d-block mb-2">Status</span>
+                        <span class="text-success fw-bold mt-1 d-inline-block fs-6"><i class="bi bi-check-circle-fill me-2"></i>{{ scan.status }}</span>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded h-100" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle);">
+                        <span class="text-muted small text-uppercase tracking-wide d-block mb-2">Open Findings</span>
+                        <span class="font-mono fs-4 text-white fw-bold">{{ scan.open_ports }}</span>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded h-100" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle);">
+                        <span class="text-muted small text-uppercase tracking-wide d-block mb-2">Risk Level</span>
+                        <div class="mt-1">
+                            {% if scan.severity == "Low" %}
+                                <span class="risk-badge risk-low"><i class="bi bi-shield-check me-2"></i> {{ scan.severity }}</span>
+                            {% elif scan.severity == "Medium" %}
+                                <span class="risk-badge risk-medium"><i class="bi bi-shield-exclamation me-2"></i> {{ scan.severity }}</span>
+                            {% else %}
+                                <span class="risk-badge risk-critical"><i class="bi bi-shield-x me-2"></i> {{ scan.severity }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="p-3 rounded h-100" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle);">
+                        <span class="text-muted small text-uppercase tracking-wide d-block mb-2">Scan Time</span>
+                        <span class="font-mono text-white-50 mt-1 d-inline-block">{{ details.scan_time }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if scan.scan_type == "Network" %}
+        <div class="section-box">
+            <h4><i class="bi bi-hdd-network text-muted me-2"></i> Open Ports & Services</h4>
+            <div class="table-responsive mt-3">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Port</th>
+                            <th>Status</th>
+                            <th>Protocol</th>
+                            <th>Service</th>
+                            <th>Product</th>
+                            <th>Version</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in details.results %}
+                        <tr>
+                            <td class="font-mono" style="color: var(--accent-primary); font-weight: 600;">{{ result.port }}</td>
+                            <td><span class="badge bg-success-subtle">{{ result.state|default('open', true) }}</span></td>
+                            <td class="font-mono text-success">{{ result.protocol }}</td>
+                            <td class="text-white fw-medium">{{ result.service }}</td>
+                            <td class="text-white-50">
+                                {% if result.product and result.product != 'Unknown' %}
+                                    {{ result.product }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="font-mono text-warning">
+                                {% if result.version and result.version != 'Not Detected' %}
+                                    {{ result.version }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if scan.scan_type == "Web" %}
+        <div class="section-box">
+            <h4><i class="bi bi-server text-muted me-2"></i> Server Ecosystem</h4>
+            <div class="d-flex align-items-center gap-4 mt-3 p-4 rounded" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle);">
+                <div>
+                    <span class="text-muted small d-block mb-1">Server Header</span>
+                    <span class="font-mono text-white">{{ details.scan_data.server }}</span>
+                </div>
+                <div class="ms-auto text-end">
+                    <span class="text-muted small d-block mb-1">Transport Security</span>
+                    {% if details.scan_data.https_enabled is none %}
+                        <span class="badge bg-secondary-subtle"><i class="bi bi-dash-circle me-1"></i> Not Scanned</span>
+                    {% elif details.scan_data.https_enabled == "Failed" %}
+                        <span class="badge bg-warning-subtle"><i class="bi bi-exclamation-triangle me-1"></i> Check Failed</span>
+                    {% elif details.scan_data.https_enabled %}
+                        <span class="badge bg-success-subtle"><i class="bi bi-lock-fill me-1"></i> Encrypted / HTTPS</span>
+                    {% else %}
+                        <span class="badge bg-danger-subtle"><i class="bi bi-unlock-fill me-1"></i> Plaintext / Unencrypted</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if details.scan_data.security_headers %}
+        <div class="section-box">
+            <h4><i class="bi bi-shield-lock text-muted me-2"></i> Security Headers Audit</h4>
+            <ul class="audit-list mt-3">
+                {% for header, status in details.scan_data.security_headers.items() %}
+                <li>
+                    <strong class="font-mono text-light">{{ header }}</strong>
+                    {% if status == "Present" %}
+                        <span class="badge bg-success-subtle"><i class="bi bi-check-circle-fill me-1"></i> Present</span>
+                    {% else %}
+                        <span class="badge bg-danger-subtle"><i class="bi bi-x-circle-fill me-1"></i> Missing</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if details.scan_data.sensitive_paths %}
+        <div class="section-box">
+            <h4><i class="bi bi-folder-x text-warning me-2"></i> Exposed Sensitive Paths</h4>
+            <ul class="audit-list mt-3">
+                {% for path in details.scan_data.sensitive_paths %}
+                <li class="border-left-warning">
+                    <span class="font-mono"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> {{ path }}</span>
+                    <span class="badge bg-warning-subtle text-warning">Exposed</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if details.scan_data.sql_issues and details.scan_data.sql_issues.issue %}
+        <div class="section-box">
+            <h4><i class="bi bi-database-fill-exclamation text-danger me-2"></i> Structured SQL Injection Findings</h4>
+            
+            <div class="p-4 rounded mt-3" style="background: rgba(227, 38, 26, 0.05); border: 1px solid rgba(227, 38, 26, 0.2); border-left: 4px solid var(--color-critical);">
+                
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3" style="border-bottom: 1px solid rgba(227, 38, 26, 0.15);">
+                    <h5 class="text-white m-0 mb-3 mb-md-0 fw-bold">
+                        <i class="bi bi-bug-fill text-danger me-2"></i> {{ details.scan_data.sql_issues.issue }}
+                    </h5>
+                    <div class="d-flex gap-3 align-items-center">
+                        <span class="badge py-2 px-3 fs-6" style="background: rgba(227, 38, 26, 0.15); color: var(--color-critical); border: 1px solid rgba(227, 38, 26, 0.3);">
+                            Severity: {{ details.scan_data.sql_issues.severity }}
+                        </span>
+                        <span class="badge py-2 px-3 fs-6" style="background: rgba(245, 158, 11, 0.15); color: var(--color-medium); border: 1px solid rgba(245, 158, 11, 0.3);">
+                            <i class="bi bi-percent me-1"></i> Confidence: {{ details.scan_data.sql_issues.confidence }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.80rem; letter-spacing: 1px;">
+                            <i class="bi bi-input-cursor-text me-2"></i>Affected Parameters
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            {% for param in details.scan_data.sql_issues.parameters %}
+                                <span class="badge font-mono py-2 px-3" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); color: var(--accent-primary);">
+                                    {{ param }}
+                                </span>
+                            {% endfor %}
+                        </div>
+
+                        <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.80rem; letter-spacing: 1px;">
+                            <i class="bi bi-braces text-warning me-2"></i>Successful Payloads
+                        </h6>
+                        <ul class="list-unstyled font-mono small" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                            {% for payload in details.scan_data.sql_issues.payloads %}
+                                <li class="mb-2 text-warning" style="word-break: break-all;">
+                                    <i class="bi bi-chevron-right me-2 text-muted"></i>{{ payload }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.80rem; letter-spacing: 1px;">
+                            <i class="bi bi-fingerprint text-success me-2"></i>Recorded Evidence
+                        </h6>
+                        <ul class="list-unstyled small mb-4">
+                            {% for finding in details.scan_data.sql_issues.findings %}
+                                <li class="mb-2 text-light d-flex align-items-center">
+                                    <i class="bi bi-check2-circle text-success me-3 fs-5"></i> {{ finding }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+
+                        <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.80rem; letter-spacing: 1px;">
+                            <i class="bi bi-shield-check text-info me-2"></i>Recommendations
+                        </h6>
+                        <ul class="list-unstyled small">
+                            {% for rec in details.scan_data.sql_issues.recommendation %}
+                                <li class="mb-2 text-light d-flex align-items-center">
+                                    <i class="bi bi-arrow-right-short text-info me-2 fs-5"></i> {{ rec }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if details.scan_data.xss_issues %}
+        <div class="section-box">
+            <h4><i class="bi bi-code-slash text-danger me-2"></i> Cross-Site Scripting (XSS) Findings</h4>
+            <ul class="audit-list mt-3">
+                {% for issue in details.scan_data.xss_issues %}
+                <li class="border-left-danger" style="display:block;">
+                    <div class="d-flex justify-content-between gap-3 align-items-start">
+                        <div>
+                            <strong><i class="bi bi-terminal-fill text-danger me-2"></i> {{ issue.type or issue.vulnerability or 'Reflected Cross-Site Scripting (XSS)' }}</strong>
+                            <div class="small mt-1">Parameter <code>{{ issue.parameter or 'Unknown' }}</code> at <code>{{ issue.endpoint or 'Unknown endpoint' }}</code></div>
+                        </div>
+                        <span class="badge bg-danger-subtle">{{ (issue.severity or 'High')|upper }}</span>
+                    </div>
+                    <div class="row g-2 mt-3 small">
+                        <div class="col-md-6"><strong>Method:</strong> <code>{{ issue.method or 'GET' }}</code></div>
+                        <div class="col-md-6"><strong>Parameter:</strong> <code>{{ issue.parameter or 'Not available' }}</code></div>
+                        <div class="col-12"><strong>Endpoint:</strong> <code>{{ issue.endpoint or 'Not available' }}</code></div>
+                        <div class="col-12"><strong>Test Query:</strong> <code>{{ issue.test_query or 'Not available' }}</code></div>
+                        <div class="col-12"><strong>Test URL:</strong> <code>{{ issue.test_url or 'Not available' }}</code></div>
+                        <div class="col-12"><strong>Evidence:</strong> {{ issue.evidence or 'The scanner-controlled test value was reflected into an executable HTML context.' }}</div>
+                    </div>
+                    <details class="mt-3">
+                        <summary class="text-info fw-semibold">Technical Details</summary>
+                        <div class="row g-2 mt-2 small">
+                            <div class="col-md-6"><strong>HTTP method:</strong> <code>{{ issue.method or 'GET' }}</code></div>
+                            <div class="col-md-6"><strong>Severity:</strong> <code>{{ (issue.severity or 'High')|upper }}</code></div>
+                            <div class="col-12"><strong>Endpoint:</strong> <code>{{ issue.endpoint or 'Not available' }}</code></div>
+                            <div class="col-md-6"><strong>Parameter:</strong> <code>{{ issue.parameter or 'Not available' }}</code></div>
+                            <div class="col-md-6"><strong>Test marker:</strong> <code>{{ issue.test_marker or 'Not available' }}</code></div>
+                            <div class="col-12"><strong>Final tested URL:</strong> <code>{{ issue.test_url or 'Not available' }}</code></div>
+                            <div class="col-12"><strong>Reflection context:</strong> <code>{{ issue.context or (issue.reflection_contexts|join(', ') if issue.reflection_contexts else 'Executable HTML context') }}</code></div>
+                            <div class="col-12"><strong>Detection reason:</strong> {{ issue.detection_reason or issue.evidence or 'Scanner-controlled input was reflected into an executable HTML context.' }}</div>
+                        </div>
+                    </details>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% endif %}
+
+        {% if scan.scan_type == "SSL" %}
+        {% set ssl_details = scan.details|from_json %}
+
+        <div class="report-section">
+            <div class="section-header">
+                <h4>
+                    <i class="bi bi-shield-lock me-2"></i>
+                    SSL/TLS Assessment
+                </h4>
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">Target</span>
+                        <span class="detail-value">
+                            {{ scan.target }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">Risk Level</span>
+                        <span class="detail-value">
+                            {{ ssl_details.get("risk", "Not Evaluated") }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">TLS Connection</span>
+                        <span class="detail-value">
+                            {% if ssl_details.get("tls_connected") %}
+                                Connected
+                            {% else %}
+                                Not Connected
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">Certificate Trusted</span>
+                        <span class="detail-value">
+                            {% if ssl_details.get("certificate_trusted") %}
+                                Yes
+                            {% else %}
+                                No
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">Trust Status</span>
+                        <span class="detail-value">
+                            {{ ssl_details.get("trust_status", "Unknown") }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">Hostname Validation</span>
+                        <span class="detail-value">
+                            {% if ssl_details.get("hostname_valid") is sameas true %}
+                                Valid
+                            {% elif ssl_details.get("hostname_valid") is sameas false %}
+                                Invalid
+                            {% else %}
+                                Not Evaluated
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">Issuer</span>
+                        <span class="detail-value">
+                            {{ ssl_details.get("issuer", "Unknown") }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">Issued To</span>
+                        <span class="detail-value">
+                            {{ ssl_details.get("issued_to", "Unknown") }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">TLS Version</span>
+                        <span class="detail-value">
+                            {{ ssl_details.get("tls_version", "Unknown") }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">Cipher</span>
+                        <span class="detail-value">
+                            {{ ssl_details.get("cipher", "Unknown") }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">Hash Algorithm</span>
+                        <span class="detail-value">
+                            {{ ssl_details.get("hash_algorithm", "Unknown") }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">Expiry Date</span>
+                        <span class="detail-value">
+                            {{ ssl_details.get("expiry_date", "N/A") }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <span class="detail-label">Days Remaining</span>
+                        <span class="detail-value">
+                            {% if ssl_details.get("days_remaining") is not none %}
+                                {{ ssl_details.get("days_remaining") }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+
+            {% if ssl_details.get("verification_error") %}
+                <div class="alert alert-warning mt-4">
+                    <strong>
+                        Certificate Verification Information
+                    </strong>
+
+                    <div class="mt-2">
+                        {{ ssl_details.get("verification_error") }}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if ssl_details.get("error") %}
+                <div class="alert alert-danger mt-4">
+                    <strong>SSL/TLS Error</strong>
+
+                    <div class="mt-2">
+                        {{ ssl_details.get("error") }}
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+</body>
+</html> 

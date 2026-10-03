@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Reports - SURAKSHA</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- GLOBAL THEME INITIALIZER (Prevents Flashing) -->
+    <script>
+        const savedTheme = localStorage.getItem("theme") || "blue";
+        if (savedTheme === "red") {
+            document.documentElement.setAttribute("data-theme", "red");
+        }
+    </script>
+
+    <style>
+        :root {
+            /* DEFAULT BLUE CYBER THEME */
+            --bg-main: #060b26;
+            --bg-card: #101935;
+            --bg-sidebar: #0b112c;
+            --bg-inner: #0b112c;
+            
+            --accent-primary: #00e5ff;
+            --accent-primary-rgb: 0, 229, 255;
+            --accent-secondary: #1d4ed8;
+            
+            --text-muted: #94a3b8;
+            
+            --color-critical: #ef4444;
+            --color-medium: #f59e0b;
+            --color-low: #10b981;
+        }
+
+        html[data-theme="red"] {
+            /* PREMIUM RED BLACK CYBER THEME */
+            --bg-main: #050505;
+            --bg-card: #0d0d0d;
+            --bg-sidebar: #090909;
+            --bg-inner: #0a0a0a;
+
+            --accent-primary: #ff003c; 
+            --accent-primary-rgb: 255, 0, 60;
+            --accent-secondary: #8b0000; 
+
+            --text-muted: #7a7a7a;
+            
+            --color-critical: #ff3b3b;
+            --color-medium: #ff7b00;
+            --color-low: #00c896;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-main);
+            color: #ffffff;
+            overflow-x: hidden;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        /* Custom Link Truncation for Table */
+        .url-truncate {
+            display: inline-block;
+            max-width: 220px; /* Adjusted for table column width */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.3s ease;
+            margin-bottom: 0;
+        }
+
+        .url-truncate:hover {
+            color: var(--accent-primary) !important;
+        }
+
+        .url-truncate.expanded {
+            max-width: 100%;
+            white-space: normal;
+            word-break: break-all; /* Breaks long URLs properly */
+            cursor: default;
+            color: var(--accent-primary) !important;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: fixed;
+            width: 260px;
+            height: 100vh;
+            background: var(--bg-sidebar);
+            padding: 30px 20px;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 1000;
+            transition: background-color 0.4s ease, border-color 0.4s ease;
+        }
+
+        .logo {
+            font-size: 28px;
+            color: var(--accent-primary);
+            margin-bottom: 40px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.4s ease;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: #94a3b8;
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar a i {
+            font-size: 1.2rem;
+        }
+
+        .sidebar a:hover, .active-link {
+            background: rgba(var(--accent-primary-rgb), 0.1);
+            color: var(--accent-primary) !important;
+            box-shadow: inset 0 0 10px rgba(var(--accent-primary-rgb), 0.05);
+        }
+
+        /* Content Workspace Area */
+        .main-content {
+            margin-left: 260px;
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        /* Top Header Navigation */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: border-color 0.4s ease;
+        }
+
+        .topbar h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .topbar p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 14px;
+            transition: color 0.4s ease;
+        }
+
+        /* Theme Toggle Button */
+        .theme-btn {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-muted);
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.08) rotate(15deg);
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(var(--accent-primary-rgb), 0.3);
+        }
+
+        .theme-btn:active {
+            transform: scale(0.95);
+        }
+
+        .profile-link { text-decoration: none; }
+        .profile-box {
+            background: var(--bg-card);
+            padding: 12px 20px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s ease;
+        }
+
+        .profile-box:hover {
+            transform: translateY(-2px);
+            border-color: rgba(var(--accent-primary-rgb), 0.4);
+            box-shadow: 0 8px 25px rgba(var(--accent-primary-rgb), 0.15);
+        }
+
+        .profile-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 0 15px rgba(var(--accent-primary-rgb), 0.3);
+            transition: all 0.4s ease;
+        }
+
+        .profile-name { color: white; margin: 0; font-size: 16px; font-weight: 600; }
+        .profile-text { color: var(--accent-primary); font-size: 12px; transition: color 0.4s ease; }
+
+        /* Integrated Report Table Ledger Box */
+        .table-box {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.4s ease, border-color 0.4s ease;
+        }
+
+        /* Search Form Input Overrides */
+        .search-input, .search-select {
+            background: var(--bg-inner) !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            color: #ffffff !important;
+            border-radius: 12px;
+            padding: 14px;
+            transition: all 0.4s ease;
+        }
+
+        .search-input:focus, .search-select:focus {
+            border-color: var(--accent-primary) !important;
+            box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.15) !important;
+            outline: none;
+        }
+
+        table {
+            color: #e2e8f0 !important;
+            margin-bottom: 0;
+            vertical-align: middle;
+        }
+
+        table th {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted) !important;
+            font-weight: 600;
+            padding: 14px 10px !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            transition: color 0.4s ease, border-color 0.4s ease;
+        }
+
+        table td {
+            padding: 16px 10px !important;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+        }
+
+        /* Custom Adaptive Badging Framework */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .badge-network {
+            background: rgba(var(--accent-primary-rgb), 0.15);
+            color: var(--accent-primary);
+            border: 1px solid rgba(var(--accent-primary-rgb), 0.2);
+            transition: all 0.4s ease;
+        }
+
+        .risk-low { background: rgba(16, 185, 129, 0.15); color: var(--color-low); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .risk-medium { background: rgba(245, 158, 11, 0.15); color: var(--color-medium); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .risk-critical { background: rgba(239, 68, 68, 0.15); color: var(--color-critical); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        .btn-scan {
+            background: var(--accent-primary);
+            color: #000000;
+            font-weight: 700;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-scan:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(var(--accent-primary-rgb), 0.3);
+            background: var(--accent-primary);
+            color: #000000;
+        }
+
+        /* Overriding Bootstrap Info Button to sync with theme */
+        .btn-outline-info {
+            color: var(--accent-primary) !important;
+            border-color: var(--accent-primary) !important;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-info:hover {
+            background-color: var(--accent-primary) !important;
+            color: #000 !important;
+            box-shadow: 0 5px 15px rgba(var(--accent-primary-rgb), 0.3);
+        }
+
+        /* Dynamic Colors */
+        .text-info { 
+            color: var(--accent-primary) !important; 
+            transition: color 0.4s ease; 
+        }
+
+        .text-muted {
+            color: var(--text-muted) !important;
+            transition: color 0.4s ease;
+        }
+
+        @media(max-width: 992px) {
+            .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+            .main-content { margin-left: 0; padding: 20px; }
+            .topbar { flex-direction: column; align-items: flex-start; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo">
+        <i class="bi bi-shield-lock-fill"></i> SURAKSHA
+    </div>
+    <a href="/dashboard">
+        <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a href="/network-scan">
+        <i class="bi bi-router"></i> Network Scan
+    </a>
+    <a href="/web-scan">
+        <i class="bi bi-globe"></i> Web Scan
+    </a>
+    <a href="/ssl-check">
+        <i class="bi bi-shield-lock"></i> SSL Checker
+    </a>
+    <a href="/reports" class="active-link">
+        <i class="bi bi-file-earmark-bar-graph"></i> Reports
+    </a>
+    <a href="/logout" class="mt-5 text-danger">
+        <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+</div>
+
+<div class="main-content">
+    <div class="topbar">
+        <div>
+            <h1>All Scan Reports</h1>
+        </div>
+        
+        <!-- Theme Toggle Button Aligned with Profile -->
+        <div class="d-flex align-items-center gap-3">
+            <button class="theme-btn" id="themeBtn" title="Toggle Theme">
+                <i class="bi bi-moon-stars-fill"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="table-box mb-4">
+        <form method="GET">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-6">
+                    <input type="text" name="search" class="form-control search-input" placeholder="Search target, domain or IP..." value="{{ request.args.get('search', '') }}">
+                </div>
+                <div class="col-md-4">
+                    <select name="scan_type" class="form-select search-select">
+                        <option value="">All Scan Types</option>
+                        <option value="Network" {% if request.args.get('scan_type') == 'Network' %}selected{% endif %}>Network Scan</option>
+                        <option value="Web" {% if request.args.get('scan_type') == 'Web' %}selected{% endif %}>Web Scan</option>
+                        <option value="SSL" {% if request.args.get('scan_type') == 'SSL' %}selected{% endif %}>SSL Checker</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-scan w-100" style="padding:14px;">
+                        <i class="bi bi-search me-1"></i> Search
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-box">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Target System</th>
+                        <th>Scan Type</th>
+                        <th>Risk Metric</th>
+                        <th>Discovered Ports</th>
+                        <th>Execution Timestamp</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if scans %}
+                        {% for scan in scans %}
+                        <tr>
+                            <td class="font-monospace text-info fw-bold">
+                                #{{ scan.id if scan.id else 'N/A' }}
+                            </td>
+                            
+                            <!-- UPDATED: Truncate Class with Click & Hover actions -->
+                            <td>
+                                <strong class="url-truncate text-white" 
+                                        onclick="this.classList.add('expanded')" 
+                                        onmouseleave="this.classList.remove('expanded')"
+                                        title="Click to view full target link">
+                                    {{ scan.target }}
+                                </strong>
+                            </td>
+                            
+                            <td>
+                                <span class="badge badge-network">{{ scan.scan_type }}</span>
+                            </td>
+                            
+                            <td>
+                                {% if scan.severity == "Low" %}
+                                    <span class="badge risk-low">{{ scan.severity }}</span>
+                                {% elif scan.severity == "Medium" %}
+                                    <span class="badge risk-medium">{{ scan.severity }}</span>
+                                {% else %}
+                                    <span class="badge risk-critical">{{ scan.severity }}</span>
+                                {% endif %}
+                            </td>
+                            
+                            <td style="color: var(--accent-primary); font-family: monospace; transition: color 0.4s ease;">
+                                {{ scan.open_ports if scan.open_ports else "0" }} Active
+                            </td>
+                            
+                            <td style="color:#e2e8f0;">
+                                {{ scan.created_at }}
+                            </td>
+                            
+                            <td class="text-end">
+                                <a href="/report/{{ scan.id }}" class="btn btn-outline-info btn-sm px-3">
+                                    <i class="bi bi-file-earmark-text me-1"></i> View Report
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <i class="bi bi-search text-info fs-1 d-block mb-3"></i>
+                                <h5 class="text-white">No Reports Found</h5>
+                                <p class="text-muted">Try changing search or scan type.</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Cross-Tab Theme Sync & Toggle Script -->
+<script>
+    // 1. Handle toggle button clicks on THIS page
+    const themeBtn = document.getElementById("themeBtn");
+
+    if (themeBtn) {
+        themeBtn.addEventListener("click", () => {
+            const currentTheme = document.documentElement.getAttribute("data-theme");
+            const newTheme = currentTheme === "red" ? "blue" : "red";
+
+            document.documentElement.setAttribute("data-theme", newTheme);
+            localStorage.setItem("theme", newTheme);
+        });
+    }
+
+    // 2. Listen for theme changes from OTHER tabs
+    window.addEventListener("storage", (event) => {
+        if (event.key === "theme") {
+            if (event.newValue === "red") {
+                document.documentElement.setAttribute("data-theme", "red");
+            } else {
+                document.documentElement.removeAttribute("data-theme"); // Reverts to blue
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

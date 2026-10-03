@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Application Checker</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <script>
+        const savedTheme = localStorage.getItem("theme") || "blue";
+        if (savedTheme === "red") {
+            document.documentElement.setAttribute("data-theme", "red");
+        }
+    </script>
+
+    <style>
+        :root {
+            /* DEFAULT BLUE CYBER THEME */
+            --bg-main: #060b26;
+            --bg-card: #101935;
+            --bg-sidebar: #0b112c;
+            --bg-inner: #0b112c;
+            
+            --accent-primary: #00e5ff;
+            --accent-primary-rgb: 0, 229, 255;
+            --accent-secondary: #1d4ed8;
+            
+            --text-muted: #94a3b8;
+            
+            --color-critical: #ef4444;
+            --color-medium: #f59e0b;
+            --color-low: #10b981;
+        }
+
+        html[data-theme="red"] {
+            /* PREMIUM RED BLACK CYBER THEME */
+            --bg-main: #050505;
+            --bg-card: #0d0d0d;
+            --bg-sidebar: #090909;
+            --bg-inner: #0a0a0a;
+
+            --accent-primary: #ff003c; 
+            --accent-primary-rgb: 255, 0, 60;
+            --accent-secondary: #8b0000; 
+
+            --text-muted: #7a7a7a;
+            
+            --color-critical: #ff3b3b;
+            --color-medium: #ff7b00;
+            --color-low: #00c896;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            background: var(--bg-main); 
+            color: #ffffff; 
+            overflow-x: hidden; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+        
+        /* Sidebar Navigation */
+        .sidebar { position: fixed; width: 260px; height: 100vh; background: var(--bg-sidebar); padding: 30px 20px; border-right: 1px solid rgba(255, 255, 255, 0.05); z-index: 1000; transition: background-color 0.4s ease, border-color 0.4s ease; }
+        .logo { font-size: 28px; color: var(--accent-primary); margin-bottom: 40px; font-weight: 800; display: flex; align-items: center; gap: 12px; text-transform: uppercase; letter-spacing: 1px; transition: color 0.4s ease; }
+        .sidebar a { display: flex; align-items: center; gap: 14px; text-decoration: none; color: #94a3b8; padding: 14px 18px; border-radius: 12px; margin-bottom: 8px; font-weight: 500; transition: all 0.3s ease; }
+        .sidebar a i { font-size: 1.2rem; }
+        .sidebar a:hover, .active-link { background: rgba(var(--accent-primary-rgb), 0.1); color: var(--accent-primary) !important; box-shadow: inset 0 0 10px rgba(var(--accent-primary-rgb), 0.05); }
+        
+        /* Content Workspace Area */
+        .main-content { margin-left: 260px; padding: 40px; min-height: 100vh; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: border-color 0.4s ease; }
+        .topbar h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+        .topbar p { color: var(--text-muted); margin: 0; font-size: 14px; transition: color 0.4s ease; }
+        
+        /* Theme Toggle Button */
+        .theme-btn { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); width: 52px; height: 52px; border-radius: 14px; font-size: 20px; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; }
+        .theme-btn:hover { transform: scale(1.08) rotate(15deg); color: var(--accent-primary); border-color: var(--accent-primary); box-shadow: 0 0 20px rgba(var(--accent-primary-rgb), 0.3); }
+        .theme-btn:active { transform: scale(0.95); }
+
+        /* Profile */
+        .profile-link { text-decoration: none; }
+        .profile-box { background: var(--bg-card); padding: 12px 20px; border-radius: 16px; display: flex; align-items: center; gap: 14px; border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.4s ease; }
+        .profile-box:hover { transform: translateY(-2px); border-color: rgba(var(--accent-primary-rgb), 0.4); box-shadow: 0 8px 25px rgba(var(--accent-primary-rgb), 0.15); }
+        .profile-avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: 700; color: white; box-shadow: 0 0 15px rgba(var(--accent-primary-rgb), 0.3); transition: all 0.4s ease; }
+        .profile-name { color: white; margin: 0; font-size: 16px; font-weight: 600; }
+        .profile-text { color: var(--accent-primary); font-size: 12px; transition: color 0.4s ease; }
+        
+        /* Form Configuration Block */
+        .config-card { background: var(--bg-card); border-radius: 20px; padding: 35px; border: 1px solid rgba(255, 255, 255, 0.03); margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); transition: background-color 0.4s ease, border-color 0.4s ease; }
+        .form-label { font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 10px; transition: color 0.4s ease; }
+        .form-control { background: var(--bg-inner); border: 1px solid rgba(255, 255, 255, 0.08); color: white !important; padding: 14px; border-radius: 12px; transition: all 0.4s ease; }
+        .form-control:focus { background: var(--bg-inner); border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.15); }
+        .btn-scan { background: var(--accent-primary); color: #000000; font-weight: 700; padding: 14px 28px; border-radius: 12px; border: none; transition: all 0.3s ease; }
+        .btn-scan:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(var(--accent-primary-rgb), 0.3); background: var(--accent-primary); color: #000000; }
+        
+        /* Scan Options Cards */
+        .scan-option-card { background: var(--bg-inner); padding: 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.06); transition: all 0.4s ease; }
+        .scan-option-full { background: rgba(var(--accent-primary-rgb), 0.08); padding: 18px; border-radius: 14px; border: 1px solid rgba(var(--accent-primary-rgb), 0.15); transition: all 0.4s ease; }
+
+        /* Target Dashboard Diagnostics Block */
+        .info-box { background: var(--bg-card); border-radius: 20px; padding: 30px; border: 1px solid rgba(255, 255, 255, 0.03); margin-bottom: 30px; transition: background-color 0.4s ease; }
+        .info-box h4 { font-size: 20px; font-weight: 600; }
+        .info-box p { font-size: 15px; color: var(--text-muted); margin-bottom: 12px; transition: color 0.4s ease; }
+        .info-box p:last-child { margin-bottom: 0; }
+        
+        /* Report Finding Section Blocks */
+        .section-box { background: var(--bg-card); border-radius: 20px; padding: 30px; margin-bottom: 24px; border: 1px solid rgba(255, 255, 255, 0.03); transition: background-color 0.4s ease; }
+        .section-box h4 { font-size: 18px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 12px; }
+        
+        /* Metric Lists and Elements Styling */
+        .audit-list { list-style: none; padding: 0; margin: 0; }
+        .audit-list li { padding: 12px 16px; border-radius: 10px; background: var(--bg-inner) !important; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; border: 1px solid rgba(255, 255, 255, 0.06); color: #ffffff !important; transition: background-color 0.4s ease; }
+        .audit-list li.xss-finding { display: block; }
+        .xss-summary { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+        .xss-detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+        .xss-detail-item { background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; }
+        .xss-detail-item strong { display: block; color: var(--text-muted) !important; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+        .xss-detail-value { color: #e2e8f0; word-break: break-all; font-family: monospace; font-size: 13px; }
+        .finding-threat { background: rgba(239, 68, 68, 0.05) !important; border-left: 3px solid var(--color-critical) !important; color: #fca5a5; }
+        
+        /* Adaptive Custom Badges */
+        .badge { padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 12px; letter-spacing: 0.3px; }
+        .risk-badge { display: inline-block; padding: 6px 14px; border-radius: 8px; font-weight: 600; font-size: 13px; }
+        .risk-low { background: rgba(16, 185, 129, 0.15); color: var(--color-low); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .risk-medium { background: rgba(245, 158, 11, 0.15); color: var(--color-medium); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .risk-critical { background: rgba(239, 68, 68, 0.15); color: var(--color-critical); border: 1px solid rgba(239, 68, 68, 0.2); }
+        
+        .alert { border-radius: 14px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); color: #ffffff; padding: 16px 20px; transition: border-color 0.4s ease; }
+        
+        /* Bootstrap Overrides for Dynamic Colors */
+        .text-info { color: var(--accent-primary) !important; transition: color 0.4s ease; }
+        .bg-info-subtle { background-color: rgba(var(--accent-primary-rgb), 0.15) !important; border: 1px solid rgba(var(--accent-primary-rgb), 0.2); transition: all 0.4s ease; }
+        .border-info { border-color: var(--accent-primary) !important; transition: border-color 0.4s ease; }
+
+        .text-muted { color: var(--text-muted) !important; transition: color 0.4s ease; }
+        .text-white-50 { color: #e2e8f0 !important; }
+        .font-monospace { color: #ffffff; }
+        .section-box p { color: #dbeafe !important; }
+        .section-box small { color: #cbd5e1 !important; }
+        .info-box strong { color: #ffffff !important; }
+        .info-box p { color: var(--text-muted) !important; }
+        
+        @media(max-width: 992px) {
+            .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+            .main-content { margin-left: 0; padding: 20px; }
+            .topbar { flex-direction: column; align-items: flex-start; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo"><i class="bi bi-shield-lock-fill"></i> SURAKSHA</div>
+    <a href="/dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="/network-scan"><i class="bi bi-router"></i> Network Scan</a>
+    <a href="/web-scan" class="active-link"><i class="bi bi-globe"></i> Web Scan</a>
+    <a href="/ssl-check"><i class="bi bi-shield-lock"></i> SSL Checker</a>
+    <a href="/reports"><i class="bi bi-file-earmark-bar-graph"></i> Reports</a>
+    <a href="/logout" class="mt-5 text-danger"><i class="bi bi-box-arrow-right"></i> Logout</a>
+</div>
+
+<div class="main-content">
+    <div class="topbar">
+        <div>
+            <h1>Web Vulnerability Scanner</h1>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3"></div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if "Web Scan" in message or "Scan Failed" in message or "Successfully" in message %}
+                <div class="alert mb-4 d-flex align-items-center gap-3 border-start border-3 {% if category == 'danger' %}border-danger{% else %}border-info{% endif %}">
+                    <i class="bi {% if category == 'danger' %}bi-exclamation-octagon-fill text-danger{% else %}bi-info-circle-fill text-info{% endif %} fs-5"></i>
+                    <div>{{ message }}</div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="config-card">
+        <form method="POST">
+            <div class="mb-4">
+                <label class="form-label">Target Application URL / Web Address</label>
+                <div class="input-group">
+                    <input type="text" name="target" value="{{ request.form.target }}" class="form-control" placeholder="example.com" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Select Web Scan Type</label>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4">
+                        <div class="scan-option-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="web_scan_options" value="headers">
+                                <label class="form-check-label text-white"><i class="bi bi-shield-lock text-info me-2"></i> Security Headers</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="scan-option-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="web_scan_options" value="paths">
+                                <label class="form-check-label text-white"><i class="bi bi-folder-fill text-warning me-2"></i> Sensitive Paths</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="scan-option-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="web_scan_options" value="sql" id="sqlCheckbox">
+                                <label class="form-check-label text-white" for="sqlCheckbox"><i class="bi bi-database-fill text-danger me-2"></i> SQL Injection</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="scan-option-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="web_scan_options" value="xss">
+                                <label class="form-check-label text-white"><i class="bi bi-code-slash text-danger me-2"></i> XSS Scan</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="scan-option-card">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="web_scan_options" value="https">
+                                <label class="form-check-label text-white"><i class="bi bi-lock-fill text-success me-2"></i> HTTPS Check</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="scan-option-full">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="full_web_scan">
+                                <label class="form-check-label text-info fw-bold" for="full_web_scan"><i class="bi bi-lightning-charge me-2"></i> Full Web Scan (Select All)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-scan" type="submit" id="scanBtn"><span id="scanText"><i class="bi bi-search me-2"></i> Start Web Scan</span></button>
+        </form>
+
+        <script>
+            document.querySelector("form").addEventListener("submit", function(){
+                document.getElementById("scanBtn").disabled = true;
+                document.getElementById("scanText").innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Scanning...`;
+            });
+
+            const fullScanCheckbox = document.getElementById("full_web_scan");
+            if(fullScanCheckbox) {
+                fullScanCheckbox.addEventListener("change", function(){
+                    const checks = document.querySelectorAll('input[name="web_scan_options"]');
+                    checks.forEach(check => { check.checked = this.checked; });
+                });
+            }
+        </script>
+    </div>
+
+    {% if scan_data %}
+    <div class="info-box">
+        <h4 class="mb-3 text-white">Audit Summary Scope: <p class="text-muted mt-2"><i class="bi bi-globe2 me-2"></i> {{ scan_data.url }}</p></h4>
+        <div class="row g-3 mt-1">
+            <div class="col-sm-6 col-md-3">
+                <p class="m-0 text-muted small text-transform-uppercase font-monospace">Server Ecosystem</p>
+                {% if scan_data.server is none %}
+                    <span class="badge bg-secondary-subtle text-secondary font-monospace px-3 py-2"><i class="bi bi-dash-circle me-1"></i>Not Scanned</span>
+                {% elif scan_data.server.status == "failed" %}
+                    <span class="badge bg-danger-subtle text-danger font-monospace px-3 py-2"><i class="bi bi-x-circle me-1"></i>Scan Failed</span>
+                {% elif scan_data.server.status == "unavailable" %}
+                    <span class="badge bg-warning-subtle text-warning font-monospace px-3 py-2"><i class="bi bi-exclamation-triangle me-1"></i>Scan Unavailable</span>
+                {% else %}
+                    <span class="badge bg-success-subtle text-success font-monospace px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i>Scanned</span>
+                {% endif %}
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <p class="m-0 text-muted small text-transform-uppercase font-monospace">HTTPS Transport Security</p>
+                {% if scan_data.https_enabled is none %}
+                    <span class="badge mt-1 bg-secondary-subtle text-secondary font-monospace px-3 py-2"><i class="bi bi-dash-circle me-1"></i>Not Scanned</span>
+                {% elif scan_data.https_enabled.status == "failed" %}
+                    <span class="badge mt-1 bg-warning-subtle text-warning font-monospace px-3 py-2"><i class="bi bi-exclamation-triangle me-1"></i>Scan Failed</span>
+                {% else %}
+                    <span class="badge mt-1 bg-success-subtle text-success font-monospace px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i>Scanned</span>
+                {% endif %}
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <p class="m-0 text-muted small text-transform-uppercase font-monospace">Execution Timestamp</p>
+                <strong style="color:#e2e8f0;">{{ scan_time }}</strong>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <p class="m-0 text-muted small text-transform-uppercase font-monospace">Risk Evaluation</p>
+                <div class="mt-1">
+                    {% if scan_data.risk == "Low" %}
+                        <span class="risk-badge risk-low">{{ scan_data.risk }}</span>
+                    {% elif scan_data.risk == "Medium" %}
+                        <span class="risk-badge risk-medium">{{ scan_data.risk }}</span>
+                    {% elif scan_data.risk == "High" or scan_data.risk == "Critical" %}
+                        <span class="risk-badge risk-critical">{{ scan_data.risk }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary font-monospace px-3 py-2" style="font-size: 1rem;"><i class="bi bi-dash-circle me-1"></i>Not Evaluated</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if scan_data.security_headers is not none %}
+    <div class="section-box">
+        <h4><i class="bi bi-shield-lock-fill text-info"></i> HTTP Cryptographic Security Headers</h4>
+        <ul class="audit-list">
+            {% for header, status in scan_data.security_headers.items() %}
+            <li>
+                <span style="color:#e2e8f0; font-family:monospace;">{{ header }}</span>
+                {% if status == "Present" %}
+                    <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle-fill me-1"></i> Secured</span>
+                {% else %}
+                    <span class="badge bg-danger-subtle text-danger"><i class="bi bi-x-circle-fill me-1"></i> Missing Risk</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if scan_data.sensitive_paths is not none %}
+    <div class="section-box">
+        <h4><i class="bi bi-folder-symlink-fill text-warning"></i> Exposed Sensitive Paths & Vectors</h4>
+        {% if scan_data.sensitive_paths %}
+        <ul class="audit-list">
+            {% for path in scan_data.sensitive_paths %}
+            <li class="finding-threat">
+                <span class="font-monospace"><i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i> {{ path }}</span>
+                <span class="badge bg-danger text-white">Exposed Vector</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted font-monospace m-0 small"><i class="bi bi-shield-check text-success me-2"></i> No hidden operational system endpoints exposed.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if scan_data.sql_issues is not none %}
+    <div class="section-box">
+        <h4 class="mb-4"><i class="bi bi-shield-check text-info me-2"></i> SQL INJECTION SECURITY ASSESSMENT</h4>
+        
+        {% if scan_data.sql_issues and scan_data.sql_issues.issue %}
+            
+            {% set joined_findings = scan_data.sql_issues.findings|join(' ')|lower %}
+            {% set has_error = 'error' in joined_findings or 'syntax' in joined_findings %}
+            {% set has_boolean = 'boolean' in joined_findings %}
+            {% set has_length = 'length' in joined_findings %}
+            {% set has_reflection = 'reflect' in joined_findings %}
+            {% set has_time = 'time' in joined_findings or 'delay' in joined_findings %}
+            {% set has_union = 'union' in joined_findings %}
+            {% set has_auth = 'auth' in joined_findings or 'bypass' in joined_findings %}
+            {% set has_extract = 'extract' in joined_findings %}
+            {% set has_ml = 'ml' in joined_findings %}
+            
+            {% set ns = namespace(ml_conf=false) %}
+            {% for f in scan_data.sql_issues.findings %}
+                {% if 'ML Model Detected SQL Injection (Confidence: ' in f %}
+                    {% set ns.ml_conf = f.split('ML Model Detected SQL Injection (Confidence: ')[1].replace(')', '') %}
+                {% endif %}
+            {% endfor %}
+
+            <div class="finding-threat p-4 rounded mb-4" style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2);">
+                <div class="row g-4 align-items-center">
+                    <div class="col-md-3 border-end border-danger border-opacity-25">
+                        <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.75rem; letter-spacing: 1px;">Detection Status</h6>
+                        <span class="text-danger fw-bold"><i class="bi bi-bug-fill me-1"></i> SQL Injection Indicators Detected</span>
+                    </div>
+                    <div class="col-md-2 border-end border-danger border-opacity-25">
+                        <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.75rem; letter-spacing: 1px;">Severity</h6>
+                        <span class="badge py-2 px-3 fs-6" style="background: rgba(239, 68, 68, 0.15); color: var(--color-critical); border: 1px solid rgba(239, 68, 68, 0.3);">{{ scan_data.sql_issues.severity }}</span>
+                    </div>
+                    <div class="col-md-2 border-end border-danger border-opacity-25">
+                        <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.75rem; letter-spacing: 1px;">Assessment Confidence</h6>
+                        <span class="badge py-2 px-3 fs-6" style="background: rgba(245, 158, 11, 0.15); color: var(--color-medium); border: 1px solid rgba(245, 158, 11, 0.3);">{{ scan_data.sql_issues.confidence }}%</span>
+                    </div>
+                    <div class="col-md-5">
+                        <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.75rem; letter-spacing: 1px;">Affected Parameters</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for param in scan_data.sql_issues.parameters %}
+                                <span class="badge bg-inner text-info font-monospace px-2 py-1" style="border: 1px solid rgba(255,255,255,0.08);">[{{ param }}]</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-lg-6">
+                    <!-- Attack Techniques Assessed -->
+                    <div class="p-4 rounded h-100" style="background: var(--bg-inner); border: 1px solid rgba(255,255,255,0.05);">
+                        <h6 class="text-uppercase fw-bold text-white mb-3" style="font-size: 0.80rem; letter-spacing: 1px;"><i class="bi bi-shield-exclamation text-warning me-2"></i> Attack Techniques Assessed</h6>
+                        <div class="text-muted small">
+                            <strong class="text-white d-block mt-3">Error-Based SQL Injection</strong>
+                            {% if has_error %}<span class="text-success"><i class="bi bi-check2"></i> Indicator observed</span>{% else %}<span class="text-muted"><i class="bi bi-circle"></i> Not observed</span>{% endif %}
+                            
+                            <strong class="text-white d-block mt-3">Boolean-Based Blind SQL Injection</strong>
+                            {% if has_boolean %}<span class="text-success"><i class="bi bi-check2"></i> Indicator observed</span>{% else %}<span class="text-muted"><i class="bi bi-circle"></i> Not observed</span>{% endif %}
+                            
+                            <strong class="text-white d-block mt-3">UNION-Based SQL Injection</strong>
+                            {% if has_union %}<span class="text-success"><i class="bi bi-check2"></i> Indicator observed</span>{% else %}<span class="text-muted"><i class="bi bi-circle"></i> Not observed</span>{% endif %}
+                            
+                            <strong class="text-white d-block mt-3">Time-Based Blind SQL Injection</strong>
+                            {% if has_time %}<span class="text-success"><i class="bi bi-check2"></i> Indicator observed</span>{% else %}<span class="text-muted"><i class="bi bi-circle"></i> Not observed</span>{% endif %}
+                            
+                            <strong class="text-white d-block mt-3">Authentication Bypass</strong>
+                            {% if has_auth %}<span class="text-success"><i class="bi bi-check2"></i> Indicator observed</span>{% else %}<span class="text-muted"><i class="bi bi-circle"></i> Not observed</span>{% endif %}
+                            
+                            <strong class="text-white d-block mt-3">Data Extraction</strong>
+                            {% if has_extract %}<span class="text-success"><i class="bi bi-check2"></i> Indicator observed</span>{% else %}<span class="text-muted"><i class="bi bi-circle"></i> Not observed</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <!-- Actual Findings -->
+                    <div class="p-4 rounded h-100" style="background: var(--bg-inner); border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="text-uppercase fw-bold text-white mb-0" style="font-size: 0.80rem; letter-spacing: 1px;">
+                                <i class="bi bi-fingerprint text-success me-2"></i> Actual Findings
+                            </h6>
+                            {% set all_findings = scan_data.sql_issues.findings %}
+                            {% set total_findings = all_findings|length if all_findings else 0 %}
+                            <span class="text-muted small" style="font-weight: 600;">
+                                {% if total_findings > 9 %}
+                                    9 latest
+                                {% elif total_findings > 0 %}
+                                    {{ total_findings }} findings
+                                {% else %}
+                                    0 findings
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <style>
+                            .actual-findings-container {
+                                max-height: 360px;
+                                overflow-y: auto;
+                                padding-right: 8px;
+                            }
+                            .actual-findings-container::-webkit-scrollbar {
+                                width: 6px;
+                            }
+                            .actual-findings-container::-webkit-scrollbar-track {
+                                background: rgba(255,255,255,0.03);
+                                border-radius: 10px;
+                            }
+                            .actual-findings-container::-webkit-scrollbar-thumb {
+                                background: rgba(var(--accent-primary-rgb), 0.45);
+                                border-radius: 10px;
+                            }
+                            .actual-findings-container::-webkit-scrollbar-thumb:hover {
+                                background: var(--accent-primary);
+                            }
+                        </style>
+
+                        {% if all_findings %}
+                        <div class="actual-findings-container">
+                            <ul class="list-unstyled small mb-0">
+                                {% set latest_findings = all_findings[-9:] %}
+                                {% for finding in latest_findings %}
+                                    <li class="mb-2 text-light d-flex align-items-start">
+                                        <i class="bi bi-check2-circle text-success me-3 fs-5 flex-shrink-0" style="line-height: 1.2;"></i>
+                                        <span style="line-height: 1.5; margin-top: 2px;">
+                                        {% if 'ML Model Detected SQL Injection (Confidence: ' in finding %}
+                                            ML Payload Classification: SQL Injection (Confidence: {{ ns.ml_conf }})
+                                        {% else %}
+                                            {{ finding }}
+                                        {% endif %}
+                                        </span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% else %}
+                        <div class="d-flex align-items-center h-100 pt-3">
+                            <p class="text-muted small mb-0"><i class="bi bi-info-circle me-2"></i> No assessment findings recorded.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assessment Basis -->
+            <div class="p-4 rounded mb-4" style="background: rgba(13, 202, 240, 0.05); border: 1px solid rgba(13, 202, 240, 0.2);">
+                <h6 class="text-uppercase fw-bold text-white mb-3" style="font-size: 0.80rem; letter-spacing: 1px;"><i class="bi bi-clipboard-data text-info me-2"></i> Assessment Basis</h6>
+                <p class="text-muted small mb-3">Detection is based on multiple automated response indicators and payload classification.</p>
+                <ul class="list-unstyled mb-3 small text-white">
+                    {% set ic = namespace(count=0) %}
+                    {% if has_error %}<li class="mb-1"><i class="bi bi-check2 text-success me-2"></i> Database error disclosure</li>{% set ic.count = ic.count + 1 %}{% endif %}
+                    {% if has_boolean %}<li class="mb-1"><i class="bi bi-check2 text-success me-2"></i> Boolean response difference</li>{% set ic.count = ic.count + 1 %}{% endif %}
+                    {% if has_length %}<li class="mb-1"><i class="bi bi-check2 text-success me-2"></i> Response-length anomaly</li>{% set ic.count = ic.count + 1 %}{% endif %}
+                    {% if has_reflection %}<li class="mb-1"><i class="bi bi-check2 text-success me-2"></i> Payload reflection</li>{% set ic.count = ic.count + 1 %}{% endif %}
+                    {% if has_time %}<li class="mb-1"><i class="bi bi-check2 text-success me-2"></i> Time-delay behaviour</li>{% set ic.count = ic.count + 1 %}{% endif %}
+                    {% if has_ml %}<li class="mb-1"><i class="bi bi-check2 text-success me-2"></i> ML payload classification</li>{% set ic.count = ic.count + 1 %}{% endif %}
+                </ul>
+                {% if ic.count > 1 %}
+                    <strong class="text-info small">Overall assessment: Multiple indicators observed.</strong>
+                {% endif %}
+            </div>
+
+            <!-- SQL Injection Payloads -->
+            {% if scan_data.sql_issues.payloads %}
+            <div class="p-4 rounded mb-4" style="background: var(--bg-inner); border: 1px solid rgba(255,255,255,0.05);">
+                <h6 class="text-uppercase fw-bold text-white mb-3" style="font-size: 0.80rem; letter-spacing: 1px;"><i class="bi bi-braces text-warning me-2"></i> SQL Injection Payloads</h6>
+                <ul class="list-unstyled font-monospace small mb-0" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                    {% for payload in scan_data.sql_issues.payloads %}
+                        <li class="mb-2 text-warning" style="word-break: break-all;">
+                            <i class="bi bi-chevron-right me-2 text-muted"></i>{{ payload }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <!-- Potential Impact -->
+            <div class="p-4 rounded mb-4" style="background: var(--bg-inner); border: 1px solid rgba(255,255,255,0.05);">
+                <h6 class="text-uppercase fw-bold text-white mb-3" style="font-size: 0.80rem; letter-spacing: 1px;"><i class="bi bi-exclamation-triangle text-danger me-2"></i> Potential Impact</h6>
+                <ul class="list-unstyled mb-0 small text-muted">
+                    <li class="mb-1">&bull; Unauthorized database access</li>
+                    <li class="mb-1">&bull; Authentication bypass</li>
+                    <li class="mb-1">&bull; Sensitive information disclosure</li>
+                    <li class="mb-1">&bull; Data manipulation</li>
+                    <li class="mb-1">&bull; Data extraction</li>
+                    <li class="mb-0">&bull; Potential further system compromise depending on database privileges and configuration</li>
+                </ul>
+            </div>
+
+            <!-- Remediation Recommendations -->
+            {% if scan_data.sql_issues.recommendation %}
+            <div class="p-4 rounded mb-4" style="background: var(--bg-inner); border: 1px solid rgba(255,255,255,0.05);">
+                <h6 class="text-uppercase fw-bold text-white mb-3" style="font-size: 0.80rem; letter-spacing: 1px;"><i class="bi bi-shield-check text-info me-2"></i> Remediation Recommendations</h6>
+                <ul class="list-unstyled small mb-0">
+                    {% for rec in scan_data.sql_issues.recommendation %}
+                        <li class="mb-2 text-light d-flex align-items-center">
+                            <i class="bi bi-check2 text-success me-3 fs-5"></i> {{ rec }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Validation Status -->
+            <div class="mt-4 p-3 rounded d-flex gap-3 align-items-center" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2);">
+                <i class="bi bi-exclamation-circle text-warning fs-4"></i>
+                <div>
+                    <strong class="text-warning small text-uppercase d-block mb-1">Validation Status: Potential Vulnerability</strong>
+                    <p class="text-muted m-0" style="font-size: 0.8rem;">Manual validation recommended before treating the finding as confirmed.</p>
+                </div>
+            </div>
+
+        {% else %}
+            <div class="d-flex align-items-center p-3 rounded" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);">
+                <i class="bi bi-shield-check text-success fs-3 me-3"></i>
+                <div>
+                    <h6 class="text-white mb-0 fw-bold">Detection Status</h6>
+                    <p class="text-success font-monospace m-0 small">✓ No SQL Injection Indicators Found</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if scan_data.xss_issues is not none %}
+    <div class="section-box">
+        <h4><i class="bi bi-code-slash text-danger"></i> Cross-Site Scripting (XSS) Reflection Logic</h4>
+        {% if scan_data.xss_issues %}
+        <ul class="audit-list">
+            {% for issue in scan_data.xss_issues %}
+            <li class="finding-threat xss-finding">
+                <div class="xss-summary">
+                    <div>
+                        <div class="fw-bold text-white"><i class="bi bi-terminal-fill text-danger me-2"></i> {{ issue.type or issue.vulnerability or 'Reflected Cross-Site Scripting (XSS)' }}</div>
+                        <div class="small mt-1">Parameter <span class="font-monospace text-info">{{ issue.parameter or 'Unknown' }}</span> at <span class="font-monospace">{{ issue.endpoint or 'Unknown endpoint' }}</span></div>
+                    </div>
+                    <span class="badge risk-critical">{{ (issue.severity or 'High')|upper }}</span>
+                </div>
+
+                <div class="xss-detail-grid mt-3">
+                    <div class="xss-detail-item">
+                        <strong>Type</strong>
+                        <span class="xss-detail-value">{{ issue.type or issue.vulnerability or 'Reflected Cross-Site Scripting (XSS)' }}</span>
+                    </div>
+                    <div class="xss-detail-item">
+                        <strong>Method</strong>
+                        <span class="xss-detail-value">{{ issue.method or 'GET' }}</span>
+                    </div>
+                    <div class="xss-detail-item">
+                        <strong>Endpoint</strong>
+                        <span class="xss-detail-value">{{ issue.endpoint or 'Not available' }}</span>
+                    </div>
+                    <div class="xss-detail-item">
+                        <strong>Parameter</strong>
+                        <span class="xss-detail-value">{{ issue.parameter or 'Not available' }}</span>
+                    </div>
+                    <div class="xss-detail-item">
+                        <strong>Test Query</strong>
+                        <span class="xss-detail-value">{{ issue.test_query or 'Not available' }}</span>
+                    </div>
+                    <div class="xss-detail-item">
+                        <strong>Test URL</strong>
+                        <span class="xss-detail-value">{{ issue.test_url or 'Not available' }}</span>
+                    </div>
+                    <div class="xss-detail-item">
+                        <strong>Evidence</strong>
+                        <span class="xss-detail-value">{{ issue.evidence or 'The scanner-controlled test value was reflected into an executable HTML context.' }}</span>
+                    </div>
+                    <div class="xss-detail-item">
+                        <strong>Severity</strong>
+                        <span class="xss-detail-value">{{ (issue.severity or 'High')|upper }}</span>
+                    </div>
+                </div>
+
+                <details class="mt-3">
+                    <summary class="text-info fw-semibold">Technical Details</summary>
+                    <div class="xss-detail-grid mt-3">
+                        <div class="xss-detail-item"><strong>HTTP Method</strong><span class="xss-detail-value">{{ issue.method or 'GET' }}</span></div>
+                        <div class="xss-detail-item"><strong>Endpoint</strong><span class="xss-detail-value">{{ issue.endpoint or 'Not available' }}</span></div>
+                        <div class="xss-detail-item"><strong>Parameter</strong><span class="xss-detail-value">{{ issue.parameter or 'Not available' }}</span></div>
+                        <div class="xss-detail-item"><strong>Test Marker</strong><span class="xss-detail-value">{{ issue.test_marker or 'Not available' }}</span></div>
+                        <div class="xss-detail-item"><strong>Final Tested URL</strong><span class="xss-detail-value">{{ issue.test_url or 'Not available' }}</span></div>
+                        <div class="xss-detail-item"><strong>Reflection Context</strong><span class="xss-detail-value">{{ issue.context or (issue.reflection_contexts|join(', ') if issue.reflection_contexts else 'Executable HTML context') }}</span></div>
+                        <div class="xss-detail-item"><strong>Detection Reason</strong><span class="xss-detail-value">{{ issue.detection_reason or issue.evidence or 'Scanner-controlled input was reflected into an executable HTML context.' }}</span></div>
+                        <div class="xss-detail-item"><strong>Severity</strong><span class="xss-detail-value">{{ (issue.severity or 'High')|upper }}</span></div>
+                    </div>
+                </details>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted font-monospace m-0 small"><i class="bi bi-shield-check text-success me-2"></i> No reflected XSS patterns detected.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% endif %}
+</div>
+
+<script>
+    // 1. Handle toggle button clicks on THIS page
+    const themeBtn = document.getElementById("themeBtn");
+
+    if (themeBtn) {
+        themeBtn.addEventListener("click", () => {
+            const currentTheme = document.documentElement.getAttribute("data-theme");
+            const newTheme = currentTheme === "red" ? "blue" : "red";
+
+            document.documentElement.setAttribute("data-theme", newTheme);
+            localStorage.setItem("theme", newTheme);
+        });
+    }
+
+    // 2. Listen for theme changes from OTHER tabs (like Dashboard or Network Scan)
+    window.addEventListener("storage", (event) => {
+        if (event.key === "theme") {
+            if (event.newValue === "red") {
+                document.documentElement.setAttribute("data-theme", "red");
+            } else {
+                document.documentElement.removeAttribute("data-theme"); // Reverts to blue
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

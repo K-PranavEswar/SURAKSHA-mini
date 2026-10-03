@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- GLOBAL THEME INITIALIZER (Prevents Flashing) -->
+    <script>
+        const savedTheme = localStorage.getItem("theme") || "blue";
+        if (savedTheme === "red") {
+            document.documentElement.setAttribute("data-theme", "red");
+        }
+    </script>
+
+    <style>
+        :root {
+            /* DEFAULT BLUE CYBER THEME */
+            --bg-main: #060b26;
+            --bg-card: #101935;
+            --bg-inner: #0b112c;
+            
+            --accent-primary: #00e5ff;
+            --accent-primary-rgb: 0, 229, 255;
+            --accent-secondary: #1d4ed8;
+            
+            --text-muted: #94a3b8;
+            
+            --color-critical: #ef4444;
+            --color-medium: #f59e0b;
+            --color-low: #10b981;
+        }
+
+        html[data-theme="red"] {
+            /* PREMIUM RED BLACK CYBER THEME */
+            --bg-main: #050505;
+            --bg-card: #0d0d0d;
+            --bg-inner: #0a0a0a;
+
+            --accent-primary: #ff003c; 
+            --accent-primary-rgb: 255, 0, 60;
+            --accent-secondary: #8b0000; 
+
+            --text-muted: #7a7a7a;
+            
+            --color-critical: #ff3b3b;
+            --color-medium: #ff7b00;
+            --color-low: #00c896;
+        }
+
+        body {
+            background: var(--bg-main);
+            color: #ffffff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        .profile-container { padding-top: 50px; padding-bottom: 50px; max-width: 1000px; }
+
+        /* Identity Profile Wrapper Block */
+        .profile-card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 45px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.4s ease;
+        }
+
+        .avatar {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 52px;
+            font-weight: 700;
+            color: white;
+            margin: 0 auto 25px auto;
+            box-shadow: 0 0 30px rgba(var(--accent-primary-rgb), 0.25);
+        }
+
+        .profile-card h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+        .profile-card .user-email { color: var(--text-muted); font-size: 15px; transition: color 0.4s ease; }
+
+        .editable-section-label { font-size: 15px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; transition: color 0.4s ease; }
+        .input-group-text { background: var(--bg-inner); border: 1px solid rgba(255, 255, 255, 0.08); color: var(--text-muted); }
+        .form-control { background: var(--bg-inner); border: 1px solid rgba(255, 255, 255, 0.08); color: white !important; padding: 12px 16px; font-size: 15px; }
+        .form-control:focus { background: var(--bg-inner); border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.15); }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .stat-card:hover { transform: translateY(-4px); }
+        .stat-card h2 { font-size: 36px; font-weight: 700; margin-bottom: 4px; letter-spacing: -1px; }
+        .stat-card p { color: var(--text-muted); font-size: 13px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin: 0; transition: color 0.4s ease; }
+
+        .stat-scans h2 { color: var(--accent-primary); }
+        .stat-critical h2 { color: var(--color-critical); }
+        .stat-medium h2 { color: var(--color-medium); }
+        .stat-low h2 { color: var(--color-low); }
+
+        .table-box { background: var(--bg-card); border-radius: 24px; padding: 30px; margin-top: 30px; border: 1px solid rgba(255, 255, 255, 0.03); transition: background-color 0.4s ease; }
+
+        .btn-dashboard { background: rgba(var(--accent-primary-rgb), 0.1); border: 1px solid rgba(var(--accent-primary-rgb), 0.2); color: var(--accent-primary); font-weight: 600; padding: 10px 24px; border-radius: 12px; transition: all 0.3s ease; }
+        .btn-dashboard:hover { background: var(--accent-primary); color: #000000; }
+        
+        .btn-outline-info { color: var(--accent-primary); border-color: var(--accent-primary); border-radius: 8px; font-weight: 500; transition: all 0.3s ease; }
+        .btn-outline-info:hover { background-color: var(--accent-primary); color: #000; }
+
+        .badge-network { background: rgba(var(--accent-primary-rgb), 0.15); color: var(--accent-primary); border: 1px solid rgba(var(--accent-primary-rgb), 0.2); }
+        
+        .theme-btn { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); width: 40px; height: 40px; border-radius: 10px; font-size: 18px; cursor: pointer; transition: all 0.3s ease; }
+        .theme-btn:hover { color: var(--accent-primary); border-color: var(--accent-primary); transform: rotate(15deg); }
+    </style>
+</head>
+<body>
+
+<div class="container profile-container">
+    <div class="profile-card">
+        <div class="avatar">{{ user.username[0].upper() }}</div>
+        <div class="mt-2">
+            <div class="d-flex justify-content-center align-items-center gap-2">
+                <h2 class="m-0">{{ user.username }}</h2>
+                <button type="button" class="btn btn-sm btn-outline-info" onclick="toggleUsernameEdit()">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+            </div>
+            <p class="user-email mt-1 mb-0">{{ user.email }}</p>
+        </div>
+
+        <form method="POST" action="/update-profile" class="mt-2">
+            <div id="usernameEdit" class="text-start mx-auto" style="display:none; max-width: 440px;">
+                <label class="mt-4 mb-2 editable-section-label">New Username</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" name="username" class="form-control" placeholder="Enter new username">
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <div class="d-flex justify-content-center align-items-center gap-2">
+                    <span class="text-muted small font-monospace">••••••••••••</span>
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="togglePasswordEdit()">
+                        <i class="bi bi-shield-lock"></i> Change Password
+                    </button>
+                </div>
+                <div id="passwordEdit" class="text-start mx-auto" style="display:none; max-width: 440px;">
+                    <label class="mb-2 mt-4 editable-section-label">New Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" name="password" class="form-control" placeholder="Enter new secure password">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-2">
+                <button type="submit" class="btn btn-success px-4" style="border-radius:12px; font-weight:600;">
+                    <i class="bi bi-check-circle me-2"></i>Save Changes
+                </button>
+            </div>
+        </form>
+
+        <hr class="my-4" style="border-top: 1px solid rgba(255,255,255,0.08)">
+
+        <div class="d-flex justify-content-center gap-3">
+            <a href="/dashboard" class="btn btn-dashboard d-inline-flex align-items-center gap-2">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="/logout" class="btn btn-outline-danger px-4" style="border-radius:12px; font-weight:600;">
+                <i class="bi bi-box-arrow-right me-1"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="row mt-4 g-4">
+        <div class="col-sm-6 col-md-3"><div class="stat-card stat-scans"><h2>{{ total_scans }}</h2><p>Total Scans</p></div></div>
+        <div class="col-sm-6 col-md-3"><div class="stat-card stat-critical"><h2>{{ critical_count }}</h2><p>Critical</p></div></div>
+        <div class="col-sm-6 col-md-3"><div class="stat-card stat-medium"><h2>{{ medium_count }}</h2><p>Medium</p></div></div>
+        <div class="col-sm-6 col-md-3"><div class="stat-card stat-low"><h2>{{ low_count }}</h2><p>Low</p></div></div>
+    </div>
+
+    <div class="table-box">
+        <h3>Recent Scans</h3>
+        <div class="table-responsive mt-3">
+            <table class="table table-dark table-hover align-middle">
+                <thead>
+                    <tr><th>Target</th><th>Type</th><th>Risk</th><th>Status</th><th class="text-end">Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for scan in recent_scans %}
+                    <tr>
+                        <td><strong>{{ scan.target }}</strong></td>
+                        <td><span class="badge badge-network">{{ scan.scan_type }}</span></td>
+                        <td>
+                            {% if scan.severity == "Low" %}<span class="badge risk-low">Low</span>
+                            {% elif scan.severity == "Medium" %}<span class="badge risk-medium">Medium</span>
+                            {% else %}<span class="badge risk-critical">Critical</span>{% endif %}
+                        </td>
+                        <td><span class="text-info font-monospace small"><i class="bi bi-circle-fill me-1" style="font-size: 7px;"></i>{{ scan.status }}</span></td>
+                        <td class="text-end"><a href="/report/{{ scan.id }}" class="btn btn-outline-info btn-sm">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Theme Toggle Logic
+    const themeBtn = document.getElementById("themeBtn");
+    themeBtn.addEventListener("click", () => {
+        const newTheme = document.documentElement.getAttribute("data-theme") === "red" ? "blue" : "red";
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+    });
+
+    // Cross-Tab Sync
+    window.addEventListener("storage", (e) => {
+        if(e.key === "theme") document.documentElement.setAttribute("data-theme", e.newValue === "red" ? "red" : "");
+    });
+
+    function toggleUsernameEdit() { document.getElementById("usernameEdit").style.display = document.getElementById("usernameEdit").style.display === "none" ? "block" : "none"; }
+    function togglePasswordEdit() { document.getElementById("passwordEdit").style.display = document.getElementById("passwordEdit").style.display === "none" ? "block" : "none"; }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,114 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Deep Report | Suraksha{% endblock %}
+{% block page_title %}Deep Report Analysis{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="javascript:history.back()" class="text-muted text-decoration-none fw-medium">
+        <i class="bi bi-arrow-left me-2"></i> Back
+    </a>
+</div>
+
+<div class="card-box mb-4">
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="small text-muted text-uppercase fw-bold mb-1">Target</div>
+            <div class="fw-medium text-break">{{ scan.target }}</div>
+        </div>
+        <div class="col-md-2">
+            <div class="small text-muted text-uppercase fw-bold mb-1">User</div>
+            <div class="fw-medium">{{ scan.user.username }}</div>
+        </div>
+        <div class="col-md-2">
+            <div class="small text-muted text-uppercase fw-bold mb-1">Type</div>
+            <div class="fw-medium">{{ scan.scan_type }}</div>
+        </div>
+        <div class="col-md-2">
+            <div class="small text-muted text-uppercase fw-bold mb-1">Status</div>
+            <div class="fw-medium" style="color: #10b981;"><i class="bi bi-check-circle-fill me-1"></i> {{ scan.status }}</div>
+        </div>
+        <div class="col-md-3">
+            <div class="small text-muted text-uppercase fw-bold mb-1">Severity</div>
+            {% set sev = scan.severity|lower if scan.severity else 'none' %}
+            <span class="badge badge-severity {% if sev == 'critical' %}badge-critical{% elif sev == 'high' %}badge-high{% elif sev == 'medium' %}badge-medium{% elif sev == 'low' %}badge-low{% else %}badge-info{% endif %}">
+                {{ scan.severity or 'None' }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="card-box">
+    <h5 class="fw-bold mb-4 border-bottom pb-3">Technical Details</h5>
+    <div id="rawJsonData" class="d-none">{{ scan.details }}</div>
+    <div id="parsedReportContainer">
+        <div class="text-center text-muted py-4">
+            <div class="spinner-border text-danger"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const rawDataString = document.getElementById('rawJsonData').textContent.trim();
+    const container = document.getElementById('parsedReportContainer');
+
+    if (!rawDataString || rawDataString === "None" || rawDataString === "") {
+        container.innerHTML = '<p class="text-muted">No detailed findings available.</p>';
+        return;
+    }
+
+    try {
+        const parsedData = JSON.parse(rawDataString);
+        const scanInfo = parsedData.scan_data || parsedData;
+        
+        let html = '<div class="row g-4">';
+
+        if (scanInfo.sql_issues && scanInfo.sql_issues.length > 0) {
+            html += `<div class="col-12"><h6 class="text-danger fw-bold mb-3"><i class="bi bi-bug-fill me-2"></i> SQL Vulnerabilities</h6>`;
+            html += `<div class="table-responsive"><table class="table"><thead><tr><th>Issue</th><th>Payload</th></tr></thead><tbody>`;
+            scanInfo.sql_issues.forEach(issue => {
+                html += `<tr><td class="text-danger fw-medium">${issue.issue}</td><td><code style="background: rgba(227, 38, 26, 0.1); color: var(--primary-red); padding: 4px; border-radius: 4px;">${escapeHtml(issue.payload)}</code></td></tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+        }
+
+        if (scanInfo.xss_issues && scanInfo.xss_issues.length > 0) {
+            html += `<div class="col-12"><h6 class="text-warning fw-bold mb-3" style="color: var(--color-high) !important;"><i class="bi bi-exclamation-triangle-fill me-2"></i> XSS Vulnerabilities</h6>`;
+            html += `<div class="table-responsive"><table class="table"><thead><tr><th>Type</th><th>Parameter</th><th>Severity</th></tr></thead><tbody>`;
+            scanInfo.xss_issues.forEach(xss => {
+                html += `<tr><td>${xss.type || 'XSS'}</td><td><code>${xss.parameter || 'N/A'}</code></td><td><span class="badge badge-high badge-severity">${xss.severity || 'High'}</span></td></tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+        }
+
+        if (!scanInfo.sql_issues?.length && !scanInfo.xss_issues?.length) {
+            html += `<div class="col-12">
+                <div class="p-3 rounded" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981;">
+                    <i class="bi bi-shield-check me-2"></i> No critical payloads successful.
+                </div>
+            </div>`;
+        }
+        
+        html += `<div class="col-12 mt-4"><h6 class="fw-bold mb-2">Raw JSON Output</h6>
+                 <pre class="small p-3 rounded" style="background: var(--hover-bg); border: 1px solid var(--border-color); color: var(--text-main); max-height: 400px; overflow-y: auto;">${JSON.stringify(parsedData, null, 2)}</pre></div>`;
+
+        html += '</div>';
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = `<pre class="small p-3 rounded" style="background: var(--hover-bg); border: 1px solid var(--border-color); color: var(--text-main); overflow-x: auto;">${rawDataString}</pre>`;
+    }
+});
+
+function escapeHtml(unsafe) {
+    return (unsafe || "").toString()
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+}
+</script>
+{% endblock %}

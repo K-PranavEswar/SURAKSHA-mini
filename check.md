@@ -1,0 +1,31 @@
+1. https://www.google.com
+2. https://github.com
+3. https://www.wikipedia.org
+4. https://www.python.org
+5. https://stackoverflow.com
+6. https://openai.com
+7. https://www.cloudflare.com
+8. https://www.microsoft.com
+9. http://testphp.vulnweb.com
+10. https://demo.testfire.net
+11. https://demo.owasp-juice.shop
+12. http://testphp.vulnweb.com/listproducts.php?cat=1
+13. https://xss-game.appspot.com
+14. https://badssl.com
+15. https://expired.badssl.com
+16. https://self-signed.badssl.com
+17. https://wrong.host.badssl.com
+18. https://sha1-intermediate.badssl.com
+19. scanme.nmap.org
+20. 127.0.0.1
+21. localhost
+22. 192.168.1.1
+
+#DEMO ORDER 
+
+1. https://www.google.com
+2. https://github.com
+3. http://testphp.vulnweb.com
+4. https://demo.testfire.net
+5. https://badssl.com
+6. scanme.nmap.org

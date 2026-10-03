@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSL/TLS Security Checker</title>
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- GLOBAL THEME INITIALIZER (Prevents Flashing) -->
+    <script>
+        const savedTheme = localStorage.getItem("theme") || "blue";
+        if (savedTheme === "red") {
+            document.documentElement.setAttribute("data-theme", "red");
+        }
+    </script>
+
+    <style>
+        :root {
+            /* DEFAULT BLUE CYBER THEME */
+            --bg-main: #060b26;
+            --bg-card: #101935;
+            --bg-sidebar: #0b112c;
+            --bg-inner: #0b112c;
+            
+            --accent-primary: #00e5ff;
+            --accent-primary-rgb: 0, 229, 255;
+            --accent-secondary: #1d4ed8;
+            
+            --text-muted: #94a3b8;
+            
+            --color-critical: #ef4444;
+            --color-medium: #f59e0b;
+            --color-low: #10b981;
+        }
+
+        html[data-theme="red"] {
+            /* PREMIUM RED BLACK CYBER THEME */
+            --bg-main: #050505;
+            --bg-card: #0d0d0d;
+            --bg-sidebar: #090909;
+            --bg-inner: #0a0a0a;
+
+            --accent-primary: #ff003c; 
+            --accent-primary-rgb: 255, 0, 60;
+            --accent-secondary: #8b0000; 
+
+            --text-muted: #7a7a7a;
+            
+            --color-critical: #ff3b3b;
+            --color-medium: #ff7b00;
+            --color-low: #00c896;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-main);
+            color: #ffffff;
+            overflow-x: hidden;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: fixed;
+            width: 260px;
+            height: 100vh;
+            background: var(--bg-sidebar);
+            padding: 30px 20px;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 1000;
+            transition: background-color 0.4s ease, border-color 0.4s ease;
+        }
+
+        .logo {
+            font-size: 28px;
+            color: var(--accent-primary);
+            margin-bottom: 40px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.4s ease;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: #94a3b8;
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar a i {
+            font-size: 1.2rem;
+        }
+
+        .sidebar a:hover, .active-link {
+            background: rgba(var(--accent-primary-rgb), 0.1);
+            color: var(--accent-primary) !important;
+            box-shadow: inset 0 0 10px rgba(var(--accent-primary-rgb), 0.05);
+        }
+
+        /* Content Workspace Area */
+        .main-content {
+            margin-left: 260px;
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        /* Top Header Navigation */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: border-color 0.4s ease;
+        }
+
+        .topbar h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .topbar p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 14px;
+            transition: color 0.4s ease;
+        }
+
+        /* Theme Toggle Button */
+        .theme-btn {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-muted);
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.08) rotate(15deg);
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(var(--accent-primary-rgb), 0.3);
+        }
+
+        .theme-btn:active {
+            transform: scale(0.95);
+        }
+
+        .profile-link { text-decoration: none; }
+        .profile-box {
+            background: var(--bg-card);
+            padding: 12px 20px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s ease;
+        }
+        
+        .profile-box:hover {
+            transform: translateY(-2px);
+            border-color: rgba(var(--accent-primary-rgb), 0.4);
+            box-shadow: 0 8px 25px rgba(var(--accent-primary-rgb), 0.15);
+        }
+
+        .profile-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 0 15px rgba(var(--accent-primary-rgb), 0.3);
+            transition: all 0.4s ease;
+        }
+
+        .profile-name { color: white; margin: 0; font-size: 16px; font-weight: 600; }
+        .profile-text { color: var(--accent-primary); font-size: 12px; transition: color 0.4s ease; }
+
+        /* Configuration Form Blocks */
+        .config-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.4s ease, border-color 0.4s ease;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            transition: color 0.4s ease;
+        }
+
+        .form-control {
+            background: var(--bg-inner);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: white !important;
+            padding: 14px;
+            border-radius: 12px;
+            transition: all 0.4s ease;
+        }
+
+        .form-control:focus {
+            background: var(--bg-inner);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.15);
+        }
+
+        .btn-scan {
+            background: var(--accent-primary);
+            color: #000000;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: 12px;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-scan:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(var(--accent-primary-rgb), 0.3);
+            background: var(--accent-primary);
+            color: #000000;
+        }
+
+        /* Diagnostic Core Results Matrices */
+        .section-box {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: background-color 0.4s ease;
+        }
+
+        .section-box h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 12px;
+        }
+
+        .meta-grid-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-inner) !important;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: background-color 0.4s ease;
+        }
+
+        .meta-grid-row strong {
+            color: #dbeafe !important;
+            font-weight: 600;
+        }
+
+        .meta-grid-value {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            color: #ffffff !important;
+            text-align: right;
+        }
+
+        .recommendation-item {
+            background: rgba(var(--accent-primary-rgb), 0.08) !important;
+            border-left: 3px solid var(--accent-primary) !important;
+            padding: 14px 18px !important;
+            margin-bottom: 10px;
+            border-radius: 0 10px 10px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #ffffff !important;
+            transition: all 0.4s ease;
+        }
+        
+        .recommendation-item span {
+            color: #ffffff !important;
+        }
+
+        /* Adaptive Metric Badging */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .risk-low { background: rgba(16, 185, 129, 0.15); color: var(--color-low); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .risk-medium { background: rgba(245, 158, 11, 0.15); color: var(--color-medium); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .risk-critical { background: rgba(239, 68, 68, 0.15); color: var(--color-critical); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        .alert {
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            padding: 16px 20px;
+            transition: border-color 0.4s ease;
+        }
+        
+        .text-muted {
+            color: var(--text-muted) !important;
+            transition: color 0.4s ease;
+        }
+
+        .text-white-50 {
+            color: #e2e8f0 !important;
+        }
+
+        .section-box p,
+        .section-box span,
+        .section-box small {
+            color: #e2e8f0;
+        }
+
+        .font-monospace {
+            color: #ffffff !important;
+        }
+
+        /* Dynamic Bootstrap Color Overrides */
+        .text-warning { color: #facc15 !important; }
+        .text-success { color: #22c55e !important; }
+        .text-danger { color: #ef4444 !important; }
+        
+        .text-info { 
+            color: var(--accent-primary) !important; 
+            transition: color 0.4s ease; 
+        }
+        
+        .bg-success-subtle {
+            background-color: rgba(34, 197, 94, 0.15) !important;
+            border-color: rgba(34, 197, 94, 0.2) !important;
+        }
+
+        @media(max-width: 992px) {
+            .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+            .main-content { margin-left: 0; padding: 20px; }
+            .topbar { flex-direction: column; align-items: flex-start; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo">
+        <i class="bi bi-shield-lock-fill"></i> SURAKSHA
+    </div>
+    <a href="/dashboard">
+        <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a href="/network-scan">
+        <i class="bi bi-router"></i> Network Scan
+    </a>
+    <a href="/web-scan">
+        <i class="bi bi-globe"></i> Web Scan
+    </a>
+    <a href="/ssl-check" class="active-link">
+        <i class="bi bi-shield-lock"></i> SSL Checker
+    </a>
+    <a href="/reports">
+        <i class="bi bi-file-earmark-bar-graph"></i> Reports
+    </a>
+    <a href="/logout" class="mt-5 text-danger">
+        <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+</div>
+
+<div class="main-content">
+    <!-- Topbar Header -->
+    <div class="topbar">
+        <div>
+            <h1>SSL/TLS Cryptographic Checker</h1>
+        </div>
+        
+        <!-- Added aligned theme button to match dashboard -->
+        <div class="d-flex align-items-center gap-3"></div>
+    </div>
+
+    <!-- Application Notification Flash Messaging -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if "SSL" in message or "Failed" in message %}
+                <div class="alert mb-4 d-flex align-items-center gap-3 border-start border-3 {% if category == 'danger' %}border-danger{% else %}border-info{% endif %}">
+                    <i class="bi {% if category == 'danger' %}bi-shield-slash-fill text-danger{% else %}bi-info-circle-fill text-info{% endif %} fs-5"></i>
+                    <div>{{ message }}</div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Target Capture Configuration Input Panel -->
+    <div class="config-card">
+        <form method="POST">
+            <div class="mb-4">
+                <label class="form-label">Enter Target Domain Endpoint</label>
+                <div class="input-group">
+                    <input type="text" name="target" class="form-control" placeholder="google.com" required>
+                    <button class="btn btn-scan" type="submit">
+                        <i class="bi bi-shield-check me-1"></i> Scan
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Active Structural Target Results Block -->
+    {% if ssl_data %}
+    <div class="section-box">
+        <h4><i class="bi bi-patch-check-fill text-info"></i> Inspection Record: <span class="text-info font-monospace">{{ ssl_data.target }}</span></h4>
+        
+        {% if ssl_data.ssl_valid %}
+        <div class="row g-2 mt-2">
+            <div class="col-12">
+                <div class="meta-grid-row">
+                    <strong>SSL Status Certification</strong>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2"><i class="bi bi-shield-fill-check me-1"></i>Valid Chain</span>
+                </div>
+                <div class="meta-grid-row">
+                    <strong>Certificate Authority Issuer</strong>
+                    <span style="color:#e2e8f0; font-family:monospace;">{{ ssl_data.issuer }}</span>
+                </div>
+                <div class="meta-grid-row">
+                    <strong>Subject Common Name (Issued To)</strong>
+                    <span style="color:#e2e8f0; font-family:monospace;">{{ ssl_data.issued_to }}</span>
+                </div>
+                <div class="meta-grid-row">
+                    <strong>Active Protocol Standard</strong>
+                    <span style="color:#e2e8f0; font-family:monospace; font-size:14px;">{{ ssl_data.tls_version }}</span>
+                </div>
+                <div class="meta-grid-row">
+                    <strong>Hash Algorithm</strong>
+                    <span class="meta-grid-value text-info small font-monospace">{{ ssl_data.hash_algorithm if ssl_data.hash_algorithm else ssl_data.cipher }}</span>
+                </div>
+                <div class="meta-grid-row">
+                    <strong>Chain Expiration Date Bound</strong>
+                    <span style="color:#e2e8f0; font-family:monospace;">{{ ssl_data.expiry_date }}</span>
+                </div>
+                <div class="meta-grid-row">
+                    <strong>Operational Bounds Remaining</strong>
+                    <span class="meta-grid-value {% if ssl_data.days_remaining | int < 15 %}text-danger font-bold{% else %}text-success{% endif %}">
+                        {{ ssl_data.days_remaining }} Days
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert border-start border-3 border-danger d-flex flex-column gap-2 mt-3">
+            <div class="d-flex align-items-center gap-2 font-weight-bold text-danger">
+                <i class="bi bi-shield-x-fill fs-5"></i>
+                <span>Cryptographic Assertion Exception: SSL/TLS Connection Invalid</span>
+            </div>
+            <div class="text-white-50 font-monospace small mt-1 bg-black bg-opacity-20 p-3 border-radius-10">
+                {{ ssl_data.error }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Baseline Evaluation Time Processing Metrics -->
+        <div class="row mt-4 pt-2 border-top border-white border-opacity-5">
+            <div class="col-sm-6 d-flex align-items-center gap-2">
+                <span class="text-muted small">Analysis Timestamp:</span>
+                <span style="color:#e2e8f0; font-family:monospace; font-size:14px;">{{ scan_time }}</span>
+            </div>
+            <div class="col-sm-6 d-flex align-items-center justify-content-sm-end gap-2 mt-2 mt-sm-0">
+                <span class="text-muted small">Evaluated Posture Profile:</span>
+                {% if ssl_data.risk == "Low" %}
+                <span class="risk-badge risk-low">{{ ssl_data.risk }}</span>
+                {% elif ssl_data.risk == "Medium" %}
+                <span class="risk-badge risk-medium">{{ ssl_data.risk }}</span>
+                {% else %}
+                <span class="risk-badge risk-critical">{{ ssl_data.risk }}</span>
+                {% endif %}
+
+                {% if not ssl_data.ssl_valid or ssl_data.risk != "Low" %}
+                <button type="button" class="btn btn-danger btn-sm ms-2" onclick="openReportModal()">
+                    <i class="bi bi-flag"></i> Report
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Structural Recommendations Matrix Block -->
+    <div class="section-box">
+        <h4><i class="bi bi-shield-lighting text-warning"></i> Architectural Hardening Mitigations</h4>
+        <div class="mt-3">
+            <div class="recommendation-item">
+                <i class="bi bi-cone-striped text-info"></i>
+                <span>Enforce operational protocol defaults strictly to modern TLS 1.2 or TLS 1.3 endpoints.</span>
+            </div>
+            <div class="recommendation-item">
+                <i class="bi bi-cone-striped text-info"></i>
+                <span>Automate lifecycle tracking loops to renew credential validation objects at least 15 days before expiration bounds drop.</span>
+            </div>
+            <div class="recommendation-item">
+                <i class="bi bi-cone-striped text-info"></i>
+                <span>Decommission legacy symmetric stream padding primitives and weak CBC cipher sequences across infrastructure configurations.</span>
+            </div>
+            <div class="recommendation-item">
+                <i class="bi bi-cone-striped text-info"></i>
+                <span>Anchor operational dependency verification targets strictly within globally recognized, trusted root Certificate Authorities.</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Report Modal -->
+    <div id="reportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(6px);">
+        <div class="section-box m-3" style="max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 15px 50px rgba(0,0,0,0.9); position: relative; border: 1px solid rgba(255,255,255,0.15);">
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2" style="border-color: rgba(255,255,255,0.1) !important;">
+                <h4 class="text-danger mb-0" style="border:none; padding-bottom:0;">
+                    <i class="bi bi-shield-exclamation me-2"></i> Report SSL/TLS Security Finding
+                </h4>
+                <button type="button" class="btn-close btn-close-white" onclick="closeReportModal()" aria-label="Close"></button>
+            </div>
+            
+            <p class="text-white-50 small mb-3">
+                Review and dispatch an official cybersecurity advisory for target <strong class="text-info font-monospace">{{ ssl_data.target }}</strong>. The advisory is generated dynamically from the actual scan findings and will be delivered automatically by SURAKSHA.
+            </p>
+
+            <!-- Reporter & Recipient Metadata Section -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-5">
+                    <label class="form-label text-muted small fw-bold text-uppercase mb-1">
+                        <i class="bi bi-person-badge text-info me-1"></i> REPORTER
+                    </label>
+                    <div class="p-2 rounded bg-black bg-opacity-40 border border-white border-opacity-10 small font-monospace">
+                        <div class="text-white fw-bold">{{ current_user.username }}</div>
+                        <div class="text-info">{{ current_user.email }}</div>
+                    </div>
+                </div>
+
+                <div class="col-md-7">
+                    <label class="form-label text-muted small fw-bold text-uppercase mb-1">
+                        <i class="bi bi-envelope-at text-warning me-1"></i> RECIPIENT
+                    </label>
+                    <input type="email" id="reportRecipient" class="form-control form-control-sm font-monospace text-light mb-1" style="background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.2);" value="{{ email_report.recipient if email_report else 'security@' ~ ssl_data.target }}">
+                    <div id="recipientMetaBox" class="mt-1 small">
+                        {% if email_report and not email_report.is_fallback %}
+                        <div>
+                            <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25" style="font-size: 10px;">
+                                <i class="bi bi-check-circle me-1"></i>{{ email_report.contact_type or 'Official Published Contact' }}
+                            </span>
+                            {% if email_report.source_url %}
+                            <div class="text-white-50 mt-1" style="font-size: 11px;">
+                                <span class="text-muted">Source:</span> <a href="{{ email_report.source_url }}" target="_blank" class="text-info text-decoration-none font-monospace">{{ email_report.source_url }}</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div>
+                            <span class="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25" style="font-size: 10px;">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Fallback Contact
+                            </span>
+                            <div class="text-white-50 mt-1" style="font-size: 11px;">
+                                <span class="text-muted">Reason:</span> No verified security contact was found on the official website.
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject Section -->
+            <div class="mb-3">
+                <label class="form-label text-muted small fw-bold text-uppercase mb-1">
+                    <i class="bi bi-chat-left-text text-info me-1"></i> SUBJECT
+                </label>
+                <input type="text" id="reportSubject" class="form-control form-control-sm text-light font-monospace" style="background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.2);" value="{{ email_report.subject if email_report else 'Negative days aaytund bounding, so you need to upgrade or update it within few days' }}">
+            </div>
+
+            <!-- Email Body Preview Section -->
+            <div class="mb-3">
+                <label class="form-label text-muted small fw-bold text-uppercase mb-1">
+                    <i class="bi bi-file-earmark-text text-info me-1"></i> EMAIL BODY
+                </label>
+                <textarea id="reportBody" rows="11" class="form-control form-control-sm font-monospace text-light" style="background: rgba(0,0,0,0.5); border-color: rgba(255,255,255,0.15); font-size: 12px; line-height: 1.5; resize: vertical;">{{ email_report.body if email_report else '' }}</textarea>
+            </div>
+            
+            <div id="reportSuccessMsg" class="alert mt-3" style="display: none;"></div>
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4 pt-3 border-top" style="border-color: rgba(255,255,255,0.1) !important;" id="reportModalActions">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeReportModal()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: white;">Cancel</button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-info btn-sm px-4 fw-bold text-dark" id="copyReportLinkBtn" onclick="generateAndCopyReportLink()">
+                        <i class="bi bi-link-45deg me-1"></i> Copy Report Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let activeReport = {{ (email_report if email_report else None) | tojson | safe }};
+
+        function updateRecipientMeta(report) {
+            const metaBox = document.getElementById('recipientMetaBox');
+            if (!metaBox) return;
+            if (report && !report.is_fallback) {
+                metaBox.innerHTML = `
+                    <div>
+                        <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25" style="font-size: 10px;">
+                            <i class="bi bi-check-circle me-1"></i>${report.contact_type || 'Official Published Contact'}
+                        </span>
+                        ${report.source_url ? `<div class="text-white-50 mt-1" style="font-size: 11px;"><span class="text-muted">Source:</span> <a href="${report.source_url}" target="_blank" class="text-info text-decoration-none font-monospace">${report.source_url}</a></div>` : ''}
+                    </div>
+                `;
+            } else {
+                metaBox.innerHTML = `
+                    <div>
+                        <span class="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25" style="font-size: 10px;">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Fallback Contact
+                        </span>
+                        <div class="text-white-50 mt-1" style="font-size: 11px;">
+                            <span class="text-muted">Reason:</span> ${report && report.reason ? report.reason : 'No verified security contact was found on the official website.'}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function openReportModal() {
+            document.getElementById('reportModal').style.display = 'flex';
+            document.getElementById('reportSuccessMsg').style.display = 'none';
+            document.getElementById('reportModalActions').style.display = 'flex';
+            const sendBtn = document.getElementById('sendAdvisoryBtn');
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="bi bi-send-fill me-1"></i> Send Security Advisory';
+            }
+
+            if (activeReport) {
+                document.getElementById('reportRecipient').value = activeReport.recipient || '';
+                document.getElementById('reportSubject').value = activeReport.subject || '';
+                document.getElementById('reportBody').value = activeReport.body || '';
+                updateRecipientMeta(activeReport);
+            } else if (!document.getElementById('reportBody').value.trim()) {
+                // If there's no pre-built report body and no active report loaded, fetch it
+                try {
+                    const response = await fetch('/report-ssl', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'prepare',
+                            domain: {{ ssl_data.target | tojson | safe if ssl_data.target else '""' }},
+                            status: {{ (ssl_data.error if not ssl_data.ssl_valid else 'Valid') | tojson | safe if ssl_data else '""' }},
+                            expiry_date: {{ ssl_data.expiry_date | tojson | safe if ssl_data.expiry_date else '""' }},
+                            days_remaining: {{ ssl_data.days_remaining | tojson | safe if ssl_data.days_remaining else '""' }},
+                            risk: {{ ssl_data.risk | tojson | safe if ssl_data.risk else '""' }},
+                            issuer: {{ ssl_data.issuer | tojson | safe if ssl_data.issuer else '""' }},
+                            issued_to: {{ ssl_data.issued_to | tojson | safe if ssl_data.issued_to else '""' }},
+                            tls_version: {{ ssl_data.tls_version | tojson | safe if ssl_data.tls_version else '""' }},
+                            cipher: {{ ssl_data.cipher | tojson | safe if ssl_data.cipher else '""' }}
+                        })
+                    });
+                    const res = await response.json();
+                    if (res.success && res.report) {
+                        activeReport = res.report;
+                        document.getElementById('reportRecipient').value = activeReport.recipient || '';
+                        document.getElementById('reportSubject').value = activeReport.subject || '';
+                        document.getElementById('reportBody').value = activeReport.body || '';
+                        updateRecipientMeta(activeReport);
+                    }
+                } catch (e) {
+                    console.error("Failed to load prepared email:", e);
+                }
+            }
+        }
+        
+        function closeReportModal() {
+            document.getElementById('reportModal').style.display = 'none';
+        }
+
+        async function generateAndCopyReportLink() {
+            const btn = document.getElementById('copyReportLinkBtn');
+            const msgBox = document.getElementById('reportSuccessMsg');
+            
+            // Gather details
+            const recipient = document.getElementById('reportRecipient').value.trim();
+            const subject = document.getElementById('reportSubject').value.trim();
+            const body = document.getElementById('reportBody').value;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style="width: 1rem; height: 1rem;"></span>Generating...';
+            msgBox.style.display = 'none';
+            
+            const payload = {
+                reporter_name: '{{ current_user.username }}',
+                reporter_email: '{{ current_user.email }}',
+                target: {{ ssl_data.target | tojson | safe if ssl_data.target else '""' }},
+                recipient: recipient,
+                subject: subject,
+                email_body: body,
+                ssl_status: {{ (ssl_data.error if not ssl_data.ssl_valid else 'Valid') | tojson | safe if ssl_data else '""' }},
+                risk_level: {{ ssl_data.risk | tojson | safe if ssl_data.risk else '""' }}
+            };
+            
+            try {
+                const response = await fetch('/api/reports', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                msgBox.style.display = 'block';
+                
+                if (result.success) {
+                    try {
+                        await navigator.clipboard.writeText(result.share_url);
+                        msgBox.className = "alert mt-3";
+                        msgBox.style.background = "rgba(16, 185, 129, 0.15)";
+                        msgBox.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                        msgBox.style.color = "var(--color-low)";
+                        msgBox.innerHTML = `
+                            <div class="p-2">
+                                <div class="fw-bold fs-6 text-success mb-2">
+                                    <i class="bi bi-check-circle-fill me-2"></i> Report link copied successfully.
+                                </div>
+                                <div class="small text-white-50">Shareable URL: <span class="font-monospace text-info">${result.share_url}</span></div>
+                            </div>
+                        `;
+                    } catch (clipErr) {
+                        msgBox.className = "alert alert-warning mt-3";
+                        msgBox.style.background = "rgba(245, 158, 11, 0.15)";
+                        msgBox.style.borderColor = "rgba(245, 158, 11, 0.3)";
+                        msgBox.style.color = "var(--color-medium)";
+                        msgBox.innerHTML = `
+                            <div class="p-2">
+                                <div class="fw-bold fs-6 text-warning mb-2">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Link generated, but copying failed.
+                                </div>
+                                <div class="small text-white-50">Please copy manually: <br><span class="font-monospace text-info">${result.share_url}</span></div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    msgBox.className = "alert alert-danger mt-3";
+                    msgBox.style.background = "rgba(239, 68, 68, 0.15)";
+                    msgBox.style.borderColor = "rgba(239, 68, 68, 0.3)";
+                    msgBox.style.color = "#f87171";
+                    msgBox.innerHTML = `<i class="bi bi-x-circle-fill me-2"></i> Failed to generate report link.`;
+                }
+            } catch (e) {
+                console.error("Failed to generate report link:", e);
+                msgBox.className = "alert alert-danger mt-3";
+                msgBox.style.display = 'block';
+                msgBox.innerHTML = 'Unable to connect to the reporting service.';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-link-45deg me-1"></i> Copy Report Link';
+            }
+        }
+    </script>
+    {% endif %}
+</div>
+
+<!-- Cross-Tab Theme Sync & Toggle Script -->
+<script>
+    // 1. Handle toggle button clicks on THIS page
+    const themeBtn = document.getElementById("themeBtn");
+
+    themeBtn.addEventListener("click", () => {
+        const currentTheme = document.documentElement.getAttribute("data-theme");
+        const newTheme = currentTheme === "red" ? "blue" : "red";
+
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+    });
+
+    // 2. Listen for theme changes from OTHER tabs
+    window.addEventListener("storage", (event) => {
+        if (event.key === "theme") {
+            if (event.newValue === "red") {
+                document.documentElement.setAttribute("data-theme", "red");
+            } else {
+                document.documentElement.removeAttribute("data-theme"); // Reverts to default blue
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

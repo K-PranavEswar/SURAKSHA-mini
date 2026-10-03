@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Gateway - Rate Limit Exceeded</title>
+    <style>
+        :root {
+            --bg-color: #030712;
+            --panel-bg: rgba(15, 23, 42, 0.65);
+            --border-color: rgba(239, 68, 68, 0.2);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-danger: #ef4444;
+            --accent-glow: rgba(239, 68, 68, 0.15);
+            --accent-success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-color);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-primary);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Tech Grid Background */
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(239, 68, 68, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(239, 68, 68, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+            z-index: 0;
+        }
+
+        /* Glassmorphic Shield Container */
+        .security-container {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 45px 40px;
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 
+                0 20px 40px -15px rgba(0, 0, 0, 0.5),
+                0 0 50px 0px var(--accent-glow);
+            width: 440px;
+            animation: pulseGlow 4s infinite ease-in-out;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 40px 0px rgba(239, 68, 68, 0.1); }
+            50% { box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 60px 5px rgba(239, 68, 68, 0.2); }
+        }
+
+        /* Shield Icon & Header */
+        .shield-icon {
+            color: var(--accent-danger);
+            margin-bottom: 16px;
+            filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.5));
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        /* Visual Circular Countdown Countdown */
+        .countdown-wrapper {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 30px auto;
+        }
+
+        .countdown-svg {
+            transform: rotate(-90deg);
+            width: 140px;
+            height: 140px;
+        }
+
+        .countdown-svg circle {
+            fill: none;
+            stroke-width: 6;
+        }
+
+        .track {
+            stroke: rgba(255, 255, 255, 0.05);
+        }
+
+        .bar {
+            stroke: var(--accent-danger);
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear, stroke 0.5s ease;
+            filter: drop-shadow(0 0 4px var(--accent-danger));
+        }
+
+        #countdown {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 38px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-primary);
+        }
+
+        .unit {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: -4px;
+        }
+
+        /* Firewall Status Footnote */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-success);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="security-container">
+        <!-- Shield Icon -->
+        <svg class="shield-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 13c0 5-3.5 7.5-7.66 9.7a1 1 0 0 1-.68 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 .76-.97l6.67-1.67a1 1 0 0 1 .54 0l6.67 1.67A1 1 0 0 1 20 6z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+
+        <h1>Too Many Requests</h1>
+        <p class="subtitle">Your IP has triggered rate protection rules.<br>Please ambiently hold until verification cools down.</p>
+
+        <!-- Circular Countdown -->
+        <div class="countdown-wrapper">
+            <svg class="countdown-svg">
+                <circle class="track" cx="70" cy="70" r="64"></circle>
+                <circle class="bar" id="progress-bar" cx="70" cy="70" r="64"></circle>
+            </svg>
+            <div id="countdown">
+                <span id="time-text">{{ retry_after }}</span>
+                <span class="unit">Sec</span>
+            </div>
+        </div>
+
+        <!-- Protection Tag -->
+        <div class="status-badge">
+            <span class="status-dot"></span>
+            Firewall Protection Active
+        </div>
+    </div>
+
+    <script>
+        // Inject backend template variable, fallback to 60 for local testing
+        let totalTime = parseInt("{{ retry_after }}") || 60; 
+        let timeLeft = totalTime;
+
+        const timeText = document.getElementById("time-text");
+        const progressBar = document.getElementById("progress-bar");
+        
+        // Setup SVG Circumference 
+        const radius = progressBar.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius;
+        progressBar.style.strokeDasharray = circumference;
+
+        function setProgress(percent) {
+            const offset = circumference - (percent / 100) * circumference;
+            progressBar.style.strokeDashoffset = offset;
+        }
+
+        // Initialize progress bar position
+        setProgress(100);
+
+        const timer = setInterval(() => {
+            timeLeft--;
+            
+            if (timeLeft >= 0) {
+                timeText.innerText = timeLeft;
+                const percentage = (timeLeft / totalTime) * 100;
+                setProgress(percentage);
+                
+                // UX: Morph color to green when close to finish
+                if(percentage <= 20) {
+                    progressBar.style.stroke = "var(--accent-success)";
+                    progressBar.style.filter = "drop-shadow(0 0 4px var(--accent-success))";
+                }
+            }
+
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                window.location = "/login";
+            }
+        }, 1000);
+    </script>
+
+</body>
+</html>
