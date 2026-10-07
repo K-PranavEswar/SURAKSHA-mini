@@ -278,6 +278,36 @@ def inspect_certificate(hostname):
 # CERTIFICATE TRUST VALIDATION
 # ============================================================
 
+def _build_verification_context():
+    """
+    Builds an SSL context that merges certifi's CA bundle with the
+    operating-system trust store.
+
+    On Windows, Python's ssl module may not automatically load the
+    Windows certificate store when a cafile is supplied.  certifi
+    ships a curated but smaller set of root CAs, so targets whose
+    chains rely on a CA present only in the OS store would fail with
+    CERTIFICATE_VERIFY_FAILED ("unable to get local issuer
+    certificate").
+
+    By loading BOTH sources the trust store becomes the union of
+    certifi and the system roots, which is the correct behaviour for
+    a scanner that must validate arbitrary public certificates.
+
+    This does NOT disable certificate verification.
+    """
+
+    context = ssl.create_default_context(
+        cafile=certifi.where()
+    )
+
+    # Merge the platform trust store (Windows cert store, macOS
+    # Keychain, or /etc/ssl/certs on Linux) on top of certifi.
+    context.load_default_certs()
+
+    return context
+
+
 def verify_certificate(hostname):
     """
     Performs the actual certificate trust + hostname validation.
@@ -286,9 +316,7 @@ def verify_certificate(hostname):
     inspection so a local CA problem does not prevent inspection.
     """
 
-    context = ssl.create_default_context(
-        cafile=certifi.where()
-    )
+    context = _build_verification_context()
 
     context.check_hostname = True
     context.verify_mode = ssl.CERT_REQUIRED
@@ -310,20 +338,36 @@ def verify_certificate(hostname):
                     "verification_error": None
                 }
 
+    # SSLCertVerificationError is a subclass of CertificateError,
+    # so it must be caught first to avoid masking trust failures
+    # as hostname mismatches.
+    except ssl.SSLCertVerificationError as error:
+        # Distinguish hostname mismatch from other verification
+        # failures using the OpenSSL verify code.
+        if (
+            getattr(error, "verify_code", None) == 62
+            or "hostname mismatch" in str(error).lower()
+        ):
+            return {
+                "trusted": False,
+                "hostname_valid": False,
+                "verification_error": str(error),
+                "verification_type": "hostname"
+            }
+
+        return {
+            "trusted": False,
+            "hostname_valid": True,
+            "verification_error": str(error),
+            "verification_type": "trust"
+        }
+
     except ssl.CertificateError as error:
         return {
             "trusted": False,
             "hostname_valid": False,
             "verification_error": str(error),
             "verification_type": "hostname"
-        }
-
-    except ssl.SSLCertVerificationError as error:
-        return {
-            "trusted": False,
-            "hostname_valid": True,
-            "verification_error": str(error),
-            "verification_type": "trust"
         }
 
     except ssl.SSLError as error:

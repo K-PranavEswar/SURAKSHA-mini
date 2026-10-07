@@ -1,309 +1,539 @@
-import sqlite3
-from pathlib import Path
+import os
+import joblib
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    confusion_matrix,
+    classification_report
+)
 
 # ============================================================
-# SURAKSHA DATABASE ANALYZER
+# SURAKSHA ML MODEL EVALUATION
 # ============================================================
 
-DB_PATH = Path("database/scanner.db")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+MODELS_DIR = os.path.join(BASE_DIR, "models")
+DATASETS_DIR = os.path.join(BASE_DIR, "datasets")
 
 
-def print_line(char="=", length=80):
-    print(char * length)
+# ============================================================
+# SQL INJECTION MODEL
+# ============================================================
 
+def evaluate_sqli():
 
-def analyze_database():
-    if not DB_PATH.exists():
-        print(f"❌ Database not found: {DB_PATH}")
+    print("\n" + "=" * 70)
+    print("        SQL INJECTION ML MODEL")
+    print("=" * 70)
+
+    model_path = os.path.join(
+        MODELS_DIR,
+        "sqli_model.pkl"
+    )
+
+    dataset_path = os.path.join(
+        DATASETS_DIR,
+        "sqli.csv"
+    )
+
+    if not os.path.exists(model_path):
+        print(f"❌ Model not found: {model_path}")
         return
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    print_line()
-    print("        SURAKSHA DATABASE STRUCTURE & CONSTRAINT ANALYZER")
-    print_line()
-    print(f"Database: {DB_PATH.resolve()}")
-    print()
-
-    # --------------------------------------------------------
-    # DATABASE TABLES
-    # --------------------------------------------------------
-    cursor.execute("""
-        SELECT name
-        FROM sqlite_master
-        WHERE type = 'table'
-        AND name NOT LIKE 'sqlite_%'
-        ORDER BY name
-    """)
-
-    tables = [row[0] for row in cursor.fetchall()]
-
-    print(f"Tables Found: {len(tables)}")
-    print()
-
-    if not tables:
-        print("❌ No tables found.")
-        conn.close()
+    if not os.path.exists(dataset_path):
+        print(f"❌ Dataset not found: {dataset_path}")
         return
 
-    # --------------------------------------------------------
-    # ANALYSE EACH TABLE
-    # --------------------------------------------------------
-    for table in tables:
+    # Load model
+    try:
+        model = joblib.load(model_path)
+        print("✔ Model loaded: sqli_model.pkl")
+    except Exception as e:
+        print(f"❌ Model loading failed: {e}")
+        return
 
-        print_line()
-        print(f"TABLE: {table}")
-        print_line("-")
-
-        # ====================================================
-        # COLUMNS
-        # ====================================================
-        cursor.execute(f'PRAGMA table_info("{table}")')
-        columns = cursor.fetchall()
-
-        print("\n[COLUMNS]")
-        print("-" * 80)
-
-        print(
-            f"{'CID':<5}"
-            f"{'NAME':<22}"
-            f"{'TYPE':<18}"
-            f"{'NOT NULL':<12}"
-            f"{'DEFAULT':<15}"
-            f"{'PK':<5}"
+    # Load UTF-16 CSV
+    try:
+        df = pd.read_csv(
+            dataset_path,
+            encoding="utf-16"
         )
 
-        print("-" * 80)
+        print("✔ Dataset loaded: sqli.csv")
+        print(f"✔ Original dataset size: {len(df)} rows")
 
-        for col in columns:
-            cid, name, data_type, not_null, default, pk = col
+    except Exception as e:
+        print(f"❌ Dataset loading failed: {e}")
+        return
 
-            print(
-                f"{cid:<5}"
-                f"{name:<22}"
-                f"{data_type:<18}"
-                f"{'YES' if not_null else 'NO':<12}"
-                f"{str(default) if default is not None else '-':<15}"
-                f"{pk:<5}"
-            )
+    # Validate columns
+    required_columns = ["Sentence", "Label"]
 
-        # ====================================================
-        # PRIMARY KEY
-        # ====================================================
-        primary_keys = [
-            col[1]
-            for col in columns
-            if col[5] > 0
-        ]
+    for column in required_columns:
 
-        print("\n[PRIMARY KEY]")
-        if primary_keys:
-            print("  ✔", ", ".join(primary_keys))
-        else:
-            print("  ❌ No primary key")
-
-        # ====================================================
-        # FOREIGN KEYS
-        # ====================================================
-        cursor.execute(f'PRAGMA foreign_key_list("{table}")')
-        foreign_keys = cursor.fetchall()
-
-        print("\n[FOREIGN KEYS]")
-
-        if foreign_keys:
-            for fk in foreign_keys:
-                (
-                    fk_id,
-                    seq,
-                    ref_table,
-                    from_column,
-                    to_column,
-                    on_update,
-                    on_delete,
-                    match
-                ) = fk
-
-                print(
-                    f"  ✔ {from_column} → "
-                    f"{ref_table}.{to_column}"
-                )
-                print(f"    ON UPDATE : {on_update}")
-                print(f"    ON DELETE : {on_delete}")
-        else:
-            print("  - No foreign keys")
-
-        # ====================================================
-        # INDEXES
-        # ====================================================
-        cursor.execute(f'PRAGMA index_list("{table}")')
-        indexes = cursor.fetchall()
-
-        print("\n[INDEXES]")
-
-        if indexes:
-            for index in indexes:
-                seq, index_name, unique, origin, partial = index
-
-                print(
-                    f"  ✔ {index_name}"
-                    f" | UNIQUE: {'YES' if unique else 'NO'}"
-                    f" | ORIGIN: {origin}"
-                )
-
-                cursor.execute(f'PRAGMA index_info("{index_name}")')
-                index_columns = cursor.fetchall()
-
-                for idx_col in index_columns:
-                    print(f"      └── {idx_col[2]}")
-        else:
-            print("  - No indexes")
-
-        # ====================================================
-        # UNIQUE CONSTRAINTS
-        # ====================================================
-        print("\n[UNIQUE CONSTRAINTS]")
-
-        unique_found = False
-
-        for index in indexes:
-            seq, index_name, unique, origin, partial = index
-
-            if unique:
-                unique_found = True
-
-                cursor.execute(
-                    f'PRAGMA index_info("{index_name}")'
-                )
-
-                unique_columns = [
-                    row[2]
-                    for row in cursor.fetchall()
-                ]
-
-                print(
-                    f"  ✔ {index_name}: "
-                    f"{', '.join(unique_columns)}"
-                )
-
-        if not unique_found:
-            print("  - No UNIQUE constraints")
-
-        # ====================================================
-        # NOT NULL CONSTRAINTS
-        # ====================================================
-        print("\n[NOT NULL CONSTRAINTS]")
-
-        not_null_columns = [
-            col[1]
-            for col in columns
-            if col[3]
-        ]
-
-        if not_null_columns:
-            for column in not_null_columns:
-                print(f"  ✔ {column}")
-        else:
-            print("  - No NOT NULL constraints")
-
-        # ====================================================
-        # DEFAULT VALUES
-        # ====================================================
-        print("\n[DEFAULT VALUES]")
-
-        defaults_found = False
-
-        for col in columns:
-            if col[4] is not None:
-                defaults_found = True
-                print(f"  ✔ {col[1]} = {col[4]}")
-
-        if not defaults_found:
-            print("  - No default values")
-
-        # ====================================================
-        # TABLE ROW COUNT
-        # ====================================================
-        cursor.execute(f'SELECT COUNT(*) FROM "{table}"')
-        row_count = cursor.fetchone()[0]
-
-        print("\n[ROW COUNT]")
-        print(f"  {row_count}")
-
-        # ====================================================
-        # TABLE SQL / DDL
-        # ====================================================
-        cursor.execute("""
-            SELECT sql
-            FROM sqlite_master
-            WHERE type = 'table'
-            AND name = ?
-        """, (table,))
-
-        table_sql = cursor.fetchone()
-
-        print("\n[TABLE DDL]")
-
-        if table_sql and table_sql[0]:
-            print(table_sql[0])
-        else:
-            print("  - DDL not available")
-
-        print()
+        if column not in df.columns:
+            print(f"❌ Missing column: {column}")
+            print(f"Available columns: {list(df.columns)}")
+            return
 
     # --------------------------------------------------------
-    # DATABASE FOREIGN KEY CHECK
+    # Clean dataset
     # --------------------------------------------------------
-    print_line()
-    print("DATABASE INTEGRITY CHECK")
-    print_line()
 
-    cursor.execute("PRAGMA foreign_keys")
-    fk_status = cursor.fetchone()[0]
+    print("\nDATASET VALIDATION")
+    print("-" * 70)
 
     print(
-        f"Foreign Key Enforcement: "
-        f"{'ENABLED' if fk_status else 'DISABLED'}"
+        f"Missing Sentence values : "
+        f"{df['Sentence'].isna().sum()}"
+    )
+
+    print(
+        f"Missing Label values    : "
+        f"{df['Label'].isna().sum()}"
+    )
+
+    df = df.dropna(
+        subset=["Sentence", "Label"]
+    ).copy()
+
+    df["Sentence"] = (
+        df["Sentence"]
+        .astype(str)
+        .str.strip()
+    )
+
+    df = df[
+        df["Sentence"] != ""
+    ].copy()
+
+    df["Label"] = pd.to_numeric(
+        df["Label"],
+        errors="coerce"
+    )
+
+    df = df.dropna(
+        subset=["Label"]
+    ).copy()
+
+    df["Label"] = df["Label"].astype(int)
+
+    print(
+        f"Clean dataset size      : {len(df)} rows"
+    )
+
+    print("\nLABEL DISTRIBUTION")
+    print("-" * 70)
+
+    print(
+        df["Label"]
+        .value_counts()
+        .sort_index()
+    )
+
+    # Features / labels
+    X = df["Sentence"]
+    y = df["Label"]
+
+    # Train/test split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.20,
+        random_state=42,
+        stratify=y
+    )
+
+    print("\nDATA SPLIT")
+    print("-" * 70)
+    print(f"Training samples: {len(X_train)}")
+    print(f"Testing samples : {len(X_test)}")
+
+    # Prediction
+    try:
+        y_pred = model.predict(X_test)
+    except Exception as e:
+        print("\n❌ SQLi prediction failed.")
+        print(e)
+        return
+
+    # Metrics
+    accuracy = accuracy_score(
+        y_test,
+        y_pred
+    )
+
+    precision = precision_score(
+        y_test,
+        y_pred,
+        zero_division=0
+    )
+
+    recall = recall_score(
+        y_test,
+        y_pred,
+        zero_division=0
+    )
+
+    f1 = f1_score(
+        y_test,
+        y_pred,
+        zero_division=0
+    )
+
+    print("\nRESULTS")
+    print("-" * 70)
+
+    print(f"Accuracy  : {accuracy * 100:.2f}%")
+    print(f"Precision : {precision * 100:.2f}%")
+    print(f"Recall    : {recall * 100:.2f}%")
+    print(f"F1 Score  : {f1 * 100:.2f}%")
+
+    print("\nCONFUSION MATRIX")
+    print("-" * 70)
+
+    print(
+        confusion_matrix(
+            y_test,
+            y_pred
+        )
+    )
+
+    print("\nCLASSIFICATION REPORT")
+    print("-" * 70)
+
+    print(
+        classification_report(
+            y_test,
+            y_pred,
+            zero_division=0
+        )
+    )
+
+
+# ============================================================
+# NETWORK RISK MODEL
+# ============================================================
+
+def evaluate_network():
+
+    print("\n" + "=" * 70)
+    print("        NETWORK RISK RANDOM FOREST")
+    print("=" * 70)
+
+    model_path = os.path.join(
+        MODELS_DIR,
+        "network_risk_model.pkl"
+    )
+
+    # IMPORTANT:
+    # This is the cleaned dataset.
+    dataset_path = os.path.join(
+        DATASETS_DIR,
+        "network_risk.csv"
+    )
+
+    if not os.path.exists(model_path):
+        print(f"❌ Model not found: {model_path}")
+        return
+
+    if not os.path.exists(dataset_path):
+        print(
+            f"❌ Cleaned dataset not found: "
+            f"{dataset_path}"
+        )
+        return
+
+    # Load model
+    try:
+
+        model = joblib.load(
+            model_path
+        )
+
+        print(
+            "✔ Model loaded: "
+            "network_risk_model.pkl"
+        )
+
+    except Exception as e:
+
+        print(
+            f"❌ Model loading failed: {e}"
+        )
+
+        return
+
+    # Load cleaned dataset
+    try:
+
+        df = pd.read_csv(
+            dataset_path
+        )
+
+        print(
+            "✔ Dataset loaded: "
+            "network_risk.csv"
+        )
+
+        print(
+            f"✔ Dataset size: {len(df)} rows"
+        )
+
+    except Exception as e:
+
+        print(
+            f"❌ Dataset loading failed: {e}"
+        )
+
+        return
+
+    # --------------------------------------------------------
+    # Validate target
+    # --------------------------------------------------------
+
+    target_column = "risk"
+
+    if target_column not in df.columns:
+
+        print(
+            f"❌ Target column "
+            f"'{target_column}' not found."
+        )
+
+        print(
+            f"Available columns: "
+            f"{list(df.columns)}"
+        )
+
+        return
+
+    # --------------------------------------------------------
+    # Check missing values
+    # --------------------------------------------------------
+
+    print("\nDATASET VALIDATION")
+    print("-" * 70)
+
+    missing = df.isnull().sum()
+
+    total_missing = missing.sum()
+
+    print(
+        f"Total missing values: {total_missing}"
+    )
+
+    if total_missing > 0:
+
+        print("\nMissing values by column:")
+
+        print(
+            missing[
+                missing > 0
+            ]
+        )
+
+        df = df.dropna().copy()
+
+    # --------------------------------------------------------
+    # Features and target
+    # --------------------------------------------------------
+
+    X = df.drop(
+        columns=[target_column]
+    )
+
+    y = df[target_column]
+
+    # --------------------------------------------------------
+    # Label distribution
+    # --------------------------------------------------------
+
+    print("\nRISK DISTRIBUTION")
+    print("-" * 70)
+
+    print(
+        y.value_counts()
     )
 
     # --------------------------------------------------------
-    # FOREIGN KEY VIOLATION CHECK
+    # Train/test split
     # --------------------------------------------------------
-    cursor.execute("PRAGMA foreign_key_check")
-    violations = cursor.fetchall()
 
-    print("\nForeign Key Violations:")
+    try:
 
-    if violations:
-        for violation in violations:
-            print("  ❌", violation)
-    else:
-        print("  ✔ No foreign key violations")
+        X_train, X_test, y_train, y_test = train_test_split(
+
+            X,
+            y,
+
+            test_size=0.20,
+
+            random_state=42,
+
+            stratify=y
+        )
+
+    except Exception as e:
+
+        print(
+            f"❌ Dataset split failed: {e}"
+        )
+
+        return
+
+    print("\nDATA SPLIT")
+    print("-" * 70)
+
+    print(
+        f"Training samples: {len(X_train)}"
+    )
+
+    print(
+        f"Testing samples : {len(X_test)}"
+    )
 
     # --------------------------------------------------------
-    # SUMMARY
+    # Prediction
     # --------------------------------------------------------
-    print()
-    print_line()
-    print("DATABASE SUMMARY")
-    print_line()
 
-    total_rows = 0
+    try:
 
-    for table in tables:
-        cursor.execute(f'SELECT COUNT(*) FROM "{table}"')
-        count = cursor.fetchone()[0]
-        total_rows += count
+        y_pred = model.predict(
+            X_test
+        )
 
-        print(f"{table:<25} {count:>8} rows")
+    except Exception as e:
 
-    print("-" * 40)
-    print(f"{'TOTAL':<25} {total_rows:>8} rows")
+        print(
+            "\n❌ Network prediction failed."
+        )
 
-    print_line()
+        print(e)
 
-    conn.close()
+        print(
+            "\n⚠ IMPORTANT:"
+        )
 
+        print(
+            "The existing model may have been "
+            "trained using the original 5,000-row "
+            "dataset."
+        )
+
+        print(
+            "Retrain network_risk_model.pkl "
+            "using network_risk.csv "
+            "before evaluating the cleaned dataset."
+        )
+
+        return
+
+    # --------------------------------------------------------
+    # Metrics
+    # --------------------------------------------------------
+
+    accuracy = accuracy_score(
+        y_test,
+        y_pred
+    )
+
+    precision = precision_score(
+        y_test,
+        y_pred,
+        average="weighted",
+        zero_division=0
+    )
+
+    recall = recall_score(
+        y_test,
+        y_pred,
+        average="weighted",
+        zero_division=0
+    )
+
+    f1 = f1_score(
+        y_test,
+        y_pred,
+        average="weighted",
+        zero_division=0
+    )
+
+    print("\nRESULTS")
+    print("-" * 70)
+
+    print(
+        f"Accuracy  : {accuracy * 100:.2f}%"
+    )
+
+    print(
+        f"Precision : {precision * 100:.2f}%"
+    )
+
+    print(
+        f"Recall    : {recall * 100:.2f}%"
+    )
+
+    print(
+        f"F1 Score  : {f1 * 100:.2f}%"
+    )
+
+    # --------------------------------------------------------
+    # Confusion Matrix
+    # --------------------------------------------------------
+
+    print("\nCONFUSION MATRIX")
+    print("-" * 70)
+
+    print(
+        confusion_matrix(
+            y_test,
+            y_pred
+        )
+    )
+
+    # --------------------------------------------------------
+    # Classification Report
+    # --------------------------------------------------------
+
+    print("\nCLASSIFICATION REPORT")
+    print("-" * 70)
+
+    print(
+        classification_report(
+            y_test,
+            y_pred,
+            zero_division=0
+        )
+    )
+
+
+# ============================================================
+# MAIN
+# ============================================================
 
 if __name__ == "__main__":
-    analyze_database()
+
+    print("\n")
+
+    print("=" * 70)
+    print("             SURAKSHA ML MODEL EVALUATION")
+    print("=" * 70)
+
+    # SQL Injection
+    evaluate_sqli()
+
+    # Network Risk
+    evaluate_network()
+
+    print("\n")
+
+    print("=" * 70)
+    print("                    TEST COMPLETED")
+    print("=" * 70)
