@@ -18,6 +18,26 @@
         }
     </script>
 
+    <!-- EmailJS SDK Integration -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+        const EMAILJS_CONFIG = {
+            serviceId: {{ (emailjs_service_id or 'service_gma17jk') | tojson | safe }},
+            templateId: {{ (emailjs_template_id or '') | tojson | safe }},
+            publicKey: {{ (emailjs_public_key or '') | tojson | safe }}
+        };
+
+        if (typeof emailjs !== 'undefined' && EMAILJS_CONFIG.publicKey && EMAILJS_CONFIG.publicKey !== 'your_public_key') {
+            try {
+                emailjs.init({
+                    publicKey: EMAILJS_CONFIG.publicKey
+                });
+            } catch (err) {
+                console.warn("EmailJS init warning:", err);
+            }
+        }
+    </script>
+
     <style>
         :root {
             /* DEFAULT BLUE CYBER THEME */
@@ -590,11 +610,10 @@
                     <span class="risk-badge risk-critical">{{ ssl_data.risk }}</span>
                     {% endif %}
 
-                    {% if not ssl_data.ssl_valid or ssl_data.risk != "Low" %}
-                    <button type="button" class="btn btn-danger btn-sm ms-2" onclick="openReportModal()">
+                    <button type="button" class="btn btn-danger btn-sm ms-2" onclick="openReportModal()"
+                        id="openReportModalBtn">
                         <i class="bi bi-flag"></i> Report
                     </button>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -625,47 +644,62 @@
             </div>
         </div>
 
-        <!-- Report Modal -->
+        <!-- Professional SSL Security Advisory Composer Modal -->
         <div id="reportModal"
-            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(6px);">
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
             <div class="section-box m-3"
-                style="max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 15px 50px rgba(0,0,0,0.9); position: relative; border: 1px solid rgba(255,255,255,0.15);">
+                style="max-width: 760px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.95); position: relative; border: 1px solid rgba(239, 68, 68, 0.3);">
+
+                <!-- Modal Header -->
                 <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2"
                     style="border-color: rgba(255,255,255,0.1) !important;">
-                    <h4 class="text-danger mb-0" style="border:none; padding-bottom:0;">
-                        <i class="bi bi-shield-exclamation me-2"></i> Report SSL/TLS Security Finding
-                    </h4>
+                    <div class="d-flex align-items-center gap-2">
+                        <h4 class="text-danger mb-0" style="border:none; padding-bottom:0;">
+                            <i class="bi bi-shield-lock-fill me-2"></i> Compose SSL Security Advisory
+                        </h4>
+                        <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30"
+                            style="font-size: 11px;">
+                            SURAKSHA Analyst Composer
+                        </span>
+                    </div>
                     <button type="button" class="btn-close btn-close-white" onclick="closeReportModal()"
                         aria-label="Close"></button>
                 </div>
 
                 <p class="text-white-50 small mb-3">
-                    Review and dispatch an official cybersecurity advisory for target <strong
-                        class="text-info font-monospace">{{ ssl_data.target }}</strong>. The advisory is generated
-                    dynamically from the actual scan findings and will be delivered automatically by SURAKSHA.
+                    Review and customize this cybersecurity advisory for target <strong
+                        class="text-info font-monospace">{{ ssl_data.target }}</strong> before dispatch.
+                    The content reflects the live SSL/TLS assessment performed by SURAKSHA.
                 </p>
 
-                <!-- Reporter & Recipient Metadata Section -->
+                <!-- Email Header Metadata (From & To) -->
                 <div class="row g-3 mb-3">
+                    <!-- From (Fixed Sender surakshav1@gmail.com & Authenticated Analyst) -->
                     <div class="col-md-5">
                         <label class="form-label text-muted small fw-bold text-uppercase mb-1">
-                            <i class="bi bi-person-badge text-info me-1"></i> REPORTER
+                            <i class="bi bi-person-badge text-danger me-1"></i> FROM (SENDER)
                         </label>
                         <div
-                            class="p-2 rounded bg-black bg-opacity-40 border border-white border-opacity-10 small font-monospace">
-                            <div class="text-white fw-bold">{{ current_user.username }}</div>
-                            <div class="text-info">{{ current_user.email }}</div>
+                            class="p-2 rounded bg-black bg-opacity-50 border border-white border-opacity-10 small font-monospace">
+                            <div class="text-white fw-bold d-flex align-items-center gap-1">
+                                <i class="bi bi-shield-fill text-danger" style="font-size: 10px;"></i>
+                                surakshav1@gmail.com
+                            </div>
+                            <div class="text-info small">Analyst: {{ current_user.username }}</div>
+                            <div class="text-white-50" style="font-size: 11px;">Fixed Sender: SURAKSHA Advisory</div>
                         </div>
                     </div>
 
+                    <!-- To (Discovered Contact) -->
                     <div class="col-md-7">
                         <label class="form-label text-muted small fw-bold text-uppercase mb-1">
-                            <i class="bi bi-envelope-at text-warning me-1"></i> RECIPIENT
+                            <i class="bi bi-envelope-at text-warning me-1"></i> TO (TARGET CONTACT)
                         </label>
                         <input type="email" id="reportRecipient"
                             class="form-control form-control-sm font-monospace text-light mb-1"
-                            style="background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.2);"
+                            style="background: rgba(0,0,0,0.5); border-color: rgba(255,255,255,0.2);"
                             value="{{ email_report.recipient if email_report else 'security@' ~ ssl_data.target }}">
+
                         <div id="recipientMetaBox" class="mt-1 small">
                             {% if email_report and not email_report.is_fallback %}
                             <div>
@@ -688,7 +722,7 @@
                                 <span
                                     class="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-25"
                                     style="font-size: 10px;">
-                                    <i class="bi bi-exclamation-triangle me-1"></i>Fallback Contact
+                                    <i class="text-white bi bi-exclamation-triangle me-1"></i>Fallback Contact
                                 </span>
                                 <div class="text-white-50 mt-1" style="font-size: 11px;">
                                     <span class="text-muted">Reason:</span> No verified security contact was found on
@@ -706,29 +740,48 @@
                         <i class="bi bi-chat-left-text text-info me-1"></i> SUBJECT
                     </label>
                     <input type="text" id="reportSubject" class="form-control form-control-sm text-light font-monospace"
-                        style="background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.2);"
-                        value="{{ email_report.subject if email_report else 'Negative days aaytund bounding, so you need to upgrade or update it within few days' }}">
+                        style="background: rgba(0,0,0,0.5); border-color: rgba(255,255,255,0.2);"
+                        value="{{ email_report.subject if email_report else 'SURAKSHA Security Advisory: SSL/TLS Finding - ' ~ ssl_data.target }}">
                 </div>
 
-                <!-- Email Body Preview Section -->
-                <div class="mb-3">
-                    <label class="form-label text-muted small fw-bold text-uppercase mb-1">
-                        <i class="bi bi-file-earmark-text text-info me-1"></i> EMAIL BODY
-                    </label>
-                    <textarea id="reportBody" rows="11" class="form-control form-control-sm font-monospace text-light"
-                        style="background: rgba(0,0,0,0.5); border-color: rgba(255,255,255,0.15); font-size: 12px; line-height: 1.5; resize: vertical;">{{ email_report.body if email_report else '' }}</textarea>
+                <!-- Editable Message Body Section -->
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label text-muted small fw-bold text-uppercase mb-0">
+                            <i class="bi bi-file-earmark-text text-info me-1"></i> EDITABLE ADVISORY BODY
+                        </label>
+                        <span class="text-white-50" style="font-size: 11px;">Analyst Editable Prior to Sending</span>
+                    </div>
+                    <textarea id="reportBody" rows="12" class="form-control form-control-sm font-monospace text-light"
+                        style="background: rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.18); font-size: 12px; line-height: 1.5; resize: vertical;">{{ email_report.body if email_report else '' }}</textarea>
                 </div>
 
-                <div id="reportSuccessMsg" class="alert mt-3" style="display: none;"></div>
+                <!-- Generated by SURAKSHA Indicator -->
+                <div class="d-flex align-items-center justify-content-between pt-1 pb-1">
+                    <div class="text-white-50 small d-flex align-items-center gap-1">
+                        <i class="bi bi-shield-check text-danger"></i>
+                        <span style="font-size: 11px;">Generated by <strong>SURAKSHA</strong> Security
+                            Intelligence</span>
+                    </div>
+                    <div class="text-white-50" style="font-size: 11px;">
+                        <i class="bi bi-lock-fill text-muted me-1"></i>Authenticated Analyst Dispatch
+                    </div>
+                </div>
 
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4 pt-3 border-top"
+                <!-- Feedback Alert Container -->
+                <div id="reportAlertMsg" class="alert mt-3" style="display: none;"></div>
+
+                <!-- Modal Actions Footer -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 pt-3 border-top"
                     style="border-color: rgba(255,255,255,0.1) !important;" id="reportModalActions">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="closeReportModal()"
-                        style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: white;">Cancel</button>
+                        style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: white;">
+                        Cancel
+                    </button>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-info btn-sm px-4 fw-bold text-dark" id="copyReportLinkBtn"
-                            onclick="generateAndCopyReportLink()">
-                            <i class="bi bi-link-45deg me-1"></i> Copy Report Link
+                        <button type="button" class="btn btn-danger btn-sm px-4 fw-bold" id="sendAdvisoryBtn"
+                            onclick="sendSecurityAdvisory()">
+                            <i class="bi bi-send-fill me-1"></i> Send Security Advisory
                         </button>
                     </div>
                 </div>
@@ -765,12 +818,17 @@
             }
 
             async function openReportModal() {
-                document.getElementById('reportModal').style.display = 'flex';
-                document.getElementById('reportSuccessMsg').style.display = 'none';
-                document.getElementById('reportModalActions').style.display = 'flex';
+                const modal = document.getElementById('reportModal');
+                if (!modal) return;
+                modal.style.display = 'flex';
+
+                const alertBox = document.getElementById('reportAlertMsg');
+                if (alertBox) alertBox.style.display = 'none';
+
                 const sendBtn = document.getElementById('sendAdvisoryBtn');
                 if (sendBtn) {
                     sendBtn.disabled = false;
+                    sendBtn.className = 'btn btn-danger btn-sm px-4 fw-bold';
                     sendBtn.innerHTML = '<i class="bi bi-send-fill me-1"></i> Send Security Advisory';
                 }
 
@@ -779,125 +837,232 @@
                     document.getElementById('reportSubject').value = activeReport.subject || '';
                     document.getElementById('reportBody').value = activeReport.body || '';
                     updateRecipientMeta(activeReport);
-                } else if (!document.getElementById('reportBody').value.trim()) {
-                    // If there's no pre-built report body and no active report loaded, fetch it
+                } else {
+                    // Fetch pre-prepared advisory dynamically from backend
                     try {
+                        const targetDomain = {{ (ssl_data.target) | tojson | safe if (ssl_data and ssl_data.target) else '""' }};
                         const response = await fetch('/report-ssl', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 action: 'prepare',
-                                domain: {{ ssl_data.target | tojson | safe if ssl_data.target else '""' }},
-                            status: {{ (ssl_data.error if not ssl_data.ssl_valid else 'Valid') | tojson | safe if ssl_data else '""'
-                    }},
-                expiry_date: { { ssl_data.expiry_date | tojson | safe if ssl_data.expiry_date else '""' } },
-                days_remaining: { { ssl_data.days_remaining | tojson | safe if ssl_data.days_remaining else '""' } },
-                risk: { { ssl_data.risk | tojson | safe if ssl_data.risk else '""' } },
-                issuer: { { ssl_data.issuer | tojson | safe if ssl_data.issuer else '""' } },
-                issued_to: { { ssl_data.issued_to | tojson | safe if ssl_data.issued_to else '""' } },
-                tls_version: { { ssl_data.tls_version | tojson | safe if ssl_data.tls_version else '""' } },
-                cipher: { { ssl_data.cipher | tojson | safe if ssl_data.cipher else '""' } }
-            })
-                    });
-            const res = await response.json();
-            if (res.success && res.report) {
-                activeReport = res.report;
-                document.getElementById('reportRecipient').value = activeReport.recipient || '';
-                document.getElementById('reportSubject').value = activeReport.subject || '';
-                document.getElementById('reportBody').value = activeReport.body || '';
-                updateRecipientMeta(activeReport);
+                                domain: targetDomain,
+                                ssl_valid: {{ (ssl_data.ssl_valid) | tojson | safe if ssl_data else 'false' }},
+                                status: {{ (ssl_data.error if (ssl_data and not ssl_data.ssl_valid) else 'Valid') | tojson | safe if ssl_data else '""' }},
+                                expiry_date: {{ (ssl_data.expiry_date) | tojson | safe if ssl_data else '""' }},
+                                days_remaining: {{ (ssl_data.days_remaining) | tojson | safe if ssl_data else '""' }},
+                                risk: {{ (ssl_data.risk) | tojson | safe if ssl_data else '""' }},
+                                issuer: {{ (ssl_data.issuer) | tojson | safe if ssl_data else '""' }},
+                                issued_to: {{ (ssl_data.issued_to) | tojson | safe if ssl_data else '""' }},
+                                tls_version: {{ (ssl_data.tls_version) | tojson | safe if ssl_data else '""' }},
+                                cipher: {{ (ssl_data.cipher) | tojson | safe if ssl_data else '""' }},
+                                certificate_trusted: {{ (ssl_data.certificate_trusted) | tojson | safe if ssl_data else 'false' }},
+                                trust_status: {{ (ssl_data.trust_status) | tojson | safe if ssl_data else '""' }}
+                            })
+                        });
+                        const res = await response.json();
+                        if (res.success && res.report) {
+                            activeReport = res.report;
+                            document.getElementById('reportRecipient').value = activeReport.recipient || '';
+                            document.getElementById('reportSubject').value = activeReport.subject || '';
+                            document.getElementById('reportBody').value = activeReport.body || '';
+                            updateRecipientMeta(activeReport);
+                        }
+                    } catch (e) {
+                        console.error("Failed to load prepared advisory:", e);
+                    }
+                }
             }
-                } catch (e) {
-                console.error("Failed to load prepared email:", e);
-            }
-            }
-        }
 
             function closeReportModal() {
-                document.getElementById('reportModal').style.display = 'none';
+                const modal = document.getElementById('reportModal');
+                if (modal) modal.style.display = 'none';
+            }
+
+            function showAdvisoryAlert(message, type) {
+                const alertBox = document.getElementById('reportAlertMsg');
+                if (!alertBox) return;
+                alertBox.style.display = 'block';
+                if (type === 'success') {
+                    alertBox.className = "alert mt-3";
+                    alertBox.style.background = "rgba(16, 185, 129, 0.15)";
+                    alertBox.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                    alertBox.style.color = "#34d399";
+                    alertBox.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i> ${message}`;
+                } else {
+                    alertBox.className = "alert mt-3";
+                    alertBox.style.background = "rgba(239, 68, 68, 0.15)";
+                    alertBox.style.borderColor = "rgba(239, 68, 68, 0.3)";
+                    alertBox.style.color = "#f87171";
+                    alertBox.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i> ${message}`;
+                }
+            }
+
+            async function sendSecurityAdvisory() {
+                const sendBtn = document.getElementById('sendAdvisoryBtn');
+                if (!sendBtn || sendBtn.disabled) return;
+
+                const recipientInput = document.getElementById('reportRecipient');
+                const subjectInput = document.getElementById('reportSubject');
+                const bodyInput = document.getElementById('reportBody');
+
+                const recipient = recipientInput ? recipientInput.value.trim() : '';
+                const subject = subjectInput ? subjectInput.value.trim() : '';
+                const body = bodyInput ? bodyInput.value.trim() : '';
+
+                if (!recipient) {
+                    showAdvisoryAlert("Recipient email address is required.", "danger");
+                    if (recipientInput) recipientInput.focus();
+                    return;
+                }
+
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(recipient)) {
+                    showAdvisoryAlert("Please enter a valid recipient email address format.", "danger");
+                    if (recipientInput) recipientInput.focus();
+                    return;
+                }
+
+                if (!subject) {
+                    showAdvisoryAlert("Advisory subject cannot be empty.", "danger");
+                    if (subjectInput) subjectInput.focus();
+                    return;
+                }
+
+                if (!body) {
+                    showAdvisoryAlert("Advisory message body cannot be empty.", "danger");
+                    if (bodyInput) bodyInput.focus();
+                    return;
+                }
+
+                const serviceId = (typeof EMAILJS_CONFIG !== 'undefined' && EMAILJS_CONFIG.serviceId) ? EMAILJS_CONFIG.serviceId.trim() : 'service_gma17jk';
+                const templateId = (typeof EMAILJS_CONFIG !== 'undefined' && EMAILJS_CONFIG.templateId) ? EMAILJS_CONFIG.templateId.trim() : '';
+                const publicKey = (typeof EMAILJS_CONFIG !== 'undefined' && EMAILJS_CONFIG.publicKey) ? EMAILJS_CONFIG.publicKey.trim() : '';
+
+                if (!templateId || templateId === 'your_template_id' || !publicKey || publicKey === 'your_public_key') {
+                    showAdvisoryAlert("EmailJS configuration incomplete. Please configure EMAILJS_TEMPLATE_ID and EMAILJS_PUBLIC_KEY in your environment (.env).", "danger");
+                    return;
+                }
+
+                if (typeof emailjs === 'undefined') {
+                    showAdvisoryAlert("EmailJS SDK is not loaded. Please verify your internet connection.", "danger");
+                    return;
+                }
+
+                // Activate loading state to prevent duplicate clicks
+                sendBtn.disabled = true;
+                sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending Advisory...';
+
+                const alertBox = document.getElementById('reportAlertMsg');
+                if (alertBox) alertBox.style.display = 'none';
+
+                const targetDomain = {{ (ssl_data.target) | tojson | safe if (ssl_data and ssl_data.target) else '""' }};
+                const appUsername = {{ (current_user.username) | tojson | safe if (current_user and current_user.is_authenticated) else '"Security Analyst"' }};
+
+                const templateParams = {
+                    to_email: recipient,
+                    recipient: recipient,
+                    email_to: recipient,
+                    subject: subject,
+                    message: body,
+                    body: body,
+                    reportBody: body,
+                    app_username: appUsername,
+                    analyst_name: appUsername,
+                    domain: targetDomain,
+                    target_domain: targetDomain,
+                    sender_email: 'surakshav1@gmail.com',
+                    sender_name: 'SURAKSHA Security Operations'
+                };
+
+                try {
+                    const res = await emailjs.send(serviceId, templateId, templateParams, publicKey);
+
+                    // Record advisory in backend database (bypasses SMTP to prevent duplicates)
+                    try {
+                        await fetch('/report-ssl', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                action: 'record',
+                                domain: targetDomain,
+                                recipient: recipient,
+                                subject: subject,
+                                body: body,
+                                ssl_status: {{ (ssl_data.error if (ssl_data and not ssl_data.ssl_valid) else 'Valid') | tojson | safe if ssl_data else '""' }},
+                                risk_level: {{ (ssl_data.risk) | tojson | safe if ssl_data else '""' }}
+                            })
+                        });
+                    } catch (recErr) {
+                        console.warn("Backend recording notice:", recErr);
+                    }
+
+                    showAdvisoryAlert(`Security advisory successfully dispatched to ${recipient} via EmailJS.`, "success");
+                    sendBtn.className = 'btn btn-success btn-sm px-4 fw-bold';
+                    sendBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Advisory Sent';
+                    sendBtn.disabled = true;
+                } catch (err) {
+                    console.error("EmailJS dispatch failed:", err);
+                    let errMsg = "Failed to deliver security advisory via EmailJS.";
+                    if (err && err.text) {
+                        errMsg += ` (${err.text})`;
+                    } else if (err && err.message) {
+                        errMsg += ` (${err.message})`;
+                    }
+                    showAdvisoryAlert(errMsg, "danger");
+                    sendBtn.disabled = false;
+                    sendBtn.className = 'btn btn-danger btn-sm px-4 fw-bold';
+                    sendBtn.innerHTML = '<i class="bi bi-send-fill me-1"></i> Send Security Advisory';
+                }
             }
 
             async function generateAndCopyReportLink() {
                 const btn = document.getElementById('copyReportLinkBtn');
-                const msgBox = document.getElementById('reportSuccessMsg');
-
-                // Gather details
+                if (!btn) return;
                 const recipient = document.getElementById('reportRecipient').value.trim();
                 const subject = document.getElementById('reportSubject').value.trim();
                 const body = document.getElementById('reportBody').value;
 
                 btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style="width: 1rem; height: 1rem;"></span>Generating...';
-                msgBox.style.display = 'none';
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Generating...';
 
                 const payload = {
-                    reporter_name: '{{ current_user.username }}',
-                    reporter_email: '{{ current_user.email }}',
-                    target: {{ ssl_data.target | tojson | safe if ssl_data.target else '""'
-            }},
-            recipient: recipient,
-                subject: subject,
+                    reporter_name: {{ (current_user.username) | tojson | safe if current_user.is_authenticated else '"Security Analyst"' }},
+                    reporter_email: 'surakshav1@gmail.com',
+                    target: {{ (ssl_data.target) | tojson | safe if (ssl_data and ssl_data.target) else '""' }},
+                    recipient: recipient,
+                    subject: subject,
                     email_body: body,
-                        ssl_status: { { (ssl_data.error if not ssl_data.ssl_valid else 'Valid') | tojson | safe if ssl_data else '""' } },
-            risk_level: { { ssl_data.risk | tojson | safe if ssl_data.risk else '""' } }
-            };
+                    ssl_status: {{ (ssl_data.error if (ssl_data and not ssl_data.ssl_valid) else 'Valid') | tojson | safe if ssl_data else '""' }},
+                    risk_level: {{ (ssl_data.risk) | tojson | safe if ssl_data else '""' }}
+                };
 
-            try {
-                const response = await fetch('/api/reports', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                try {
+                    const response = await fetch('/api/reports', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
 
-                const result = await response.json();
-                msgBox.style.display = 'block';
-
-                if (result.success) {
-                    try {
-                        await navigator.clipboard.writeText(result.share_url);
-                        msgBox.className = "alert mt-3";
-                        msgBox.style.background = "rgba(16, 185, 129, 0.15)";
-                        msgBox.style.borderColor = "rgba(16, 185, 129, 0.3)";
-                        msgBox.style.color = "var(--color-low)";
-                        msgBox.innerHTML = `
-                            <div class="p-2">
-                                <div class="fw-bold fs-6 text-success mb-2">
-                                    <i class="bi bi-check-circle-fill me-2"></i> Report link copied successfully.
-                                </div>
-                                <div class="small text-white-50">Shareable URL: <span class="font-monospace text-info">${result.share_url}</span></div>
-                            </div>
-                        `;
-                    } catch (clipErr) {
-                        msgBox.className = "alert alert-warning mt-3";
-                        msgBox.style.background = "rgba(245, 158, 11, 0.15)";
-                        msgBox.style.borderColor = "rgba(245, 158, 11, 0.3)";
-                        msgBox.style.color = "var(--color-medium)";
-                        msgBox.innerHTML = `
-                            <div class="p-2">
-                                <div class="fw-bold fs-6 text-warning mb-2">
-                                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Link generated, but copying failed.
-                                </div>
-                                <div class="small text-white-50">Please copy manually: <br><span class="font-monospace text-info">${result.share_url}</span></div>
-                            </div>
-                        `;
+                    const result = await response.json();
+                    if (result.success) {
+                        try {
+                            await navigator.clipboard.writeText(result.share_url);
+                            showAdvisoryAlert(`Report link generated and copied to clipboard: ${result.share_url}`, 'success');
+                        } catch (clipErr) {
+                            showAdvisoryAlert(`Report link generated: ${result.share_url}`, 'success');
+                        }
+                    } else {
+                        showAdvisoryAlert(result.message || 'Failed to generate report link.', 'danger');
                     }
-                } else {
-                    msgBox.className = "alert alert-danger mt-3";
-                    msgBox.style.background = "rgba(239, 68, 68, 0.15)";
-                    msgBox.style.borderColor = "rgba(239, 68, 68, 0.3)";
-                    msgBox.style.color = "#f87171";
-                    msgBox.innerHTML = `<i class="bi bi-x-circle-fill me-2"></i> Failed to generate report link.`;
+                } catch (e) {
+                    console.error("Failed to generate report link:", e);
+                    showAdvisoryAlert('Unable to connect to the reporting service.', 'danger');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-link-45deg me-1"></i> Copy Report Link';
                 }
-            } catch (e) {
-                console.error("Failed to generate report link:", e);
-                msgBox.className = "alert alert-danger mt-3";
-                msgBox.style.display = 'block';
-                msgBox.innerHTML = 'Unable to connect to the reporting service.';
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-link-45deg me-1"></i> Copy Report Link';
             }
-        }
         </script>
         {% endif %}
     </div>

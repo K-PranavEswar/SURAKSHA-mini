@@ -888,24 +888,15 @@ def build_ssl_report_email(scan_result, user):
 
     clean_target = extract_clean_domain(target)
 
-    sender_email = ""
+    sender_email = os.environ.get("SURAKSHA_SENDER_EMAIL", "surakshav1@gmail.com")
     sender_name = "Security Analyst"
 
     if user:
-        sender_email = getattr(
-            user,
-            "email",
-            None
-        )
-
         sender_name = getattr(
             user,
             "username",
             None
         ) or sender_name
-
-    if not sender_email:
-        sender_email = "analyst@suraksha.local"
 
     recipient_info = discover_contact_email(target)
 
@@ -957,6 +948,20 @@ def build_ssl_report_email(scan_result, user):
         "days_remaining"
     )
 
+    days_int = None
+    days_remaining_wording = "N/A"
+    if days_remaining is not None:
+        try:
+            days_int = int(days_remaining)
+            if days_int > 0:
+                days_remaining_wording = f"Certificate expires in {days_int} days."
+            elif days_int == 0:
+                days_remaining_wording = "Certificate expires today."
+            else:
+                days_remaining_wording = f"Certificate expired {abs(days_int)} days ago."
+        except (ValueError, TypeError):
+            days_remaining_wording = f"{days_remaining} Days"
+
     severity = (
         scan_result.get("risk")
         or "Medium"
@@ -964,24 +969,19 @@ def build_ssl_report_email(scan_result, user):
 
     detected_issues = []
 
-    if days_remaining is not None:
-        try:
-            days_int = int(days_remaining)
-
-            if days_int < 0:
-                detected_issues.append(
-                    f"Expired SSL/TLS Certificate "
-                    f"({abs(days_int)} days beyond expiry)"
-                )
-
-            elif days_int <= 30:
-                detected_issues.append(
-                    f"Certificate Nearing Expiry "
-                    f"({days_int} days remaining)"
-                )
-
-        except (ValueError, TypeError):
-            pass
+    if days_int is not None:
+        if days_int < 0:
+            detected_issues.append(
+                f"Expired SSL/TLS Certificate ({days_remaining_wording})"
+            )
+        elif days_int == 0:
+            detected_issues.append(
+                "Certificate Expires Today (Immediate renewal required)"
+            )
+        elif days_int <= 30:
+            detected_issues.append(
+                f"Certificate Nearing Expiry ({days_remaining_wording})"
+            )
 
     if not ssl_valid:
         error_text = str(
@@ -991,20 +991,17 @@ def build_ssl_report_email(scan_result, user):
 
         if "hostname" in error_text.lower():
             detected_issues.append(
-                f"Certificate Hostname Mismatch "
-                f"({error_text})"
+                f"Certificate Hostname Mismatch ({error_text})"
             )
-
         elif "expired" in error_text.lower():
-            detected_issues.append(
-                "Expired SSL/TLS Certificate"
-            )
-
+            if not any("Expired" in issue for issue in detected_issues):
+                detected_issues.append(
+                    "Expired SSL/TLS Certificate"
+                )
         elif "self-signed" in error_text.lower():
             detected_issues.append(
                 "Self-Signed / Untrusted Certificate"
             )
-
         elif not detected_issues:
             detected_issues.append(
                 f"SSL/TLS Validation Issue ({error_text})"
@@ -1029,8 +1026,7 @@ def build_ssl_report_email(scan_result, user):
 
     if tls_version in weak_tls:
         detected_issues.append(
-            f"Deprecated Insecure Protocol Enabled "
-            f"({tls_version})"
+            f"Deprecated Insecure Protocol Enabled ({tls_version})"
         )
 
     weak_cipher_keywords = [
@@ -1051,104 +1047,160 @@ def build_ssl_report_email(scan_result, user):
         )
 
     if not detected_issues:
-        detected_issues.append(
-            f"SSL/TLS Security Posture "
-            f"Evaluated as {severity}"
-        )
+        if ssl_valid and severity.lower() == "low":
+            detected_issues.append(
+                "No active SSL/TLS vulnerabilities detected. Certificate chain is valid."
+            )
+        else:
+            detected_issues.append(
+                f"SSL/TLS Security Posture Evaluated as {severity}"
+            )
 
     detected_issue_text = "\n".join(
         f"- {issue}"
         for issue in detected_issues
     )
 
-    if (
-        ssl_valid
-        and severity.lower() == "low"
-    ):
-        ssl_status_text = "Valid"
-
-    elif days_remaining is not None and days_remaining < 0:
-        ssl_status_text = "Expired / Invalid"
-
-    elif (
-        scan_result.get("trust_status")
-        == "local_trust_store_error"
-    ):
-        ssl_status_text = (
-            "TLS Available / Local Trust Verification Issue"
+    # Remediation recommendations based on specific findings
+    recommendations = []
+    if days_int is not None and days_int < 0:
+        recommendations.append(
+            "CRITICAL - EXPIRED CERTIFICATE: The SSL/TLS certificate is EXPIRED. "
+            "Immediate renewal and deployment of a replacement certificate is required to eliminate "
+            "security warnings, restore user trust, and maintain encrypted traffic integrity."
+        )
+    elif days_int is not None and days_int == 0:
+        recommendations.append(
+            "URGENT - EXPIRES TODAY: The SSL/TLS certificate expires today. "
+            "Initiate immediate emergency renewal and deploy the updated certificate before the end of the day."
+        )
+    elif days_int is not None and days_int <= 30:
+        recommendations.append(
+            f"WARNING - EXPIRING SOON: The SSL/TLS certificate validity period ends in {days_int} days. "
+            "Initiate certificate renewal immediately and deploy the renewed certificate prior to expiration to maintain uninterrupted service."
         )
 
+    if not ssl_valid:
+        error_text_lower = str(error or "").lower()
+        if "hostname" in error_text_lower:
+            recommendations.append(
+                "HOSTNAME MISMATCH: Re-issue the certificate ensuring the Common Name (CN) and "
+                "Subject Alternative Names (SAN) accurately match the deployed domain name."
+            )
+        if "self-signed" in error_text_lower or "untrusted" in error_text_lower:
+            recommendations.append(
+                "UNTRUSTED CERTIFICATE: Replace the self-signed certificate with one issued by a "
+                "globally recognized, trusted Certificate Authority (CA)."
+            )
+
+    if tls_version in weak_tls:
+        recommendations.append(
+            f"DEPRECATED PROTOCOL: Disable legacy {tls_version} on the web server or reverse proxy. "
+            "Enforce TLS 1.2 and TLS 1.3 protocol standards strictly."
+        )
+
+    if any(keyword in cipher.upper() for keyword in weak_cipher_keywords):
+        recommendations.append(
+            f"INSECURE CIPHER: Discontinue support for weak ciphers ({cipher}). "
+            "Configure strong modern AEAD cipher suites supporting Perfect Forward Secrecy (PFS)."
+        )
+
+    if not recommendations:
+        if ssl_valid and severity.lower() == "low":
+            recommendations.append(
+                "Maintain automated certificate lifecycle monitoring and ensure ACME/automated renewal workflows remain active."
+            )
+        else:
+            recommendations.append(
+                "Review the certificate chain, hostname configuration, certificate expiry, "
+                "TLS protocol configuration, and cipher configuration according to the identified finding."
+            )
+
+    recommendation_text = "\n".join(
+        f"- {rec}"
+        for rec in recommendations
+    )
+
+    if days_int is not None and days_int < 0:
+        ssl_status_text = "EXPIRED"
+    elif days_int is not None and days_int <= 30 and ssl_valid:
+        ssl_status_text = "Expiring Soon"
+    elif ssl_valid and severity.lower() == "low":
+        ssl_status_text = "Valid"
+    elif scan_result.get("trust_status") == "local_trust_store_error":
+        ssl_status_text = "TLS Available / Local Trust Verification Issue"
     elif not ssl_valid:
         ssl_status_text = "Invalid / At Risk"
-
     else:
         ssl_status_text = "At Risk"
 
-    current_date = datetime.now().strftime(
-        "%d %B %Y"
-    )
+    cert_trusted = scan_result.get("certificate_trusted")
+    trust_status_val = scan_result.get("trust_status", "Unknown")
+    trust_status_text = f"{'Trusted' if cert_trusted else 'Untrusted'} ({trust_status_val})"
 
-    subject = (
-        f"SURAKSHA SSL/TLS Security Advisory - "
-        f"{clean_target or target}"
-    )
+    subject_cn = scan_result.get("issued_to") or scan_result.get("subject") or "N/A"
+    assessment_timestamp = scan_result.get("timestamp") or datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
+    current_date = datetime.now().strftime("%d %B %Y")
 
-    body = f"""Dear Security Team,
+    if days_int is not None and days_int < 0:
+        subject = f"SURAKSHA Security Advisory: EXPIRED SSL/TLS Certificate - {clean_target or target}"
+    elif days_int is not None and days_int <= 30:
+        subject = f"SURAKSHA Security Advisory: Expiring SSL/TLS Certificate - {clean_target or target}"
+    elif not ssl_valid or severity.lower() in ("critical", "high"):
+        subject = f"SURAKSHA Security Advisory: SSL/TLS Security Finding - {clean_target or target}"
+    else:
+        subject = f"SURAKSHA Security Advisory: SSL/TLS Assessment - {clean_target or target}"
 
-SURAKSHA – An Intelligent Vulnerability Scanner has completed an SSL/TLS security assessment for your domain.
+    body = f"""SURAKSHA CYBERSECURITY ADVISORY
+============================================================
+CONFIDENTIAL & PRIVILEGED INFRASTRUCTURE ASSESSMENT
+============================================================
 
-Target:
-{clean_target or target}
+Dear Security Team,
 
-SSL/TLS Status:
-{ssl_status_text}
+SURAKSHA – Intelligent Vulnerability Scanner has completed an SSL/TLS security assessment for your domain.
 
-Risk Level:
-{severity}
+============================================================
+SSL/TLS ASSESSMENT SUMMARY
+============================================================
+Target Domain:           {clean_target or target}
+SSL Certificate Status:  {ssl_status_text}
+Risk Level:              {severity}
+Verification Status:     {trust_status_text}
+Issuer:                  {scan_result.get("issuer", "N/A")}
+Subject / Common Name:   {subject_cn}
+TLS Version:             {tls_version}
+Cipher Suite:            {cipher}
+Hash Algorithm:          {hash_algorithm}
+Certificate Expiry Date: {expiry_date}
+Days Remaining:          {days_remaining_wording}
 
-Certificate Trusted:
-{"Yes" if scan_result.get("certificate_trusted") else "No"}
-
-Trust Status:
-{scan_result.get("trust_status", "Unknown")}
-
-Issuer:
-{scan_result.get("issuer", "N/A")}
-
-Issued To:
-{scan_result.get("issued_to", "N/A")}
-
-TLS Version:
-{tls_version}
-
-Cipher:
-{cipher}
-
-Hash Algorithm:
-{hash_algorithm}
-
-Expiry Date:
-{expiry_date}
-
-Days Remaining:
-{str(days_remaining) + " Days" if days_remaining is not None else "N/A"}
-
-Detected Issues:
+------------------------------------------------------------
+IDENTIFIED ISSUES:
+------------------------------------------------------------
 {detected_issue_text}
 
-Recommendation:
-Review the certificate chain, hostname configuration, certificate expiry,
-TLS protocol configuration, and cipher configuration according to the
-identified finding.
+------------------------------------------------------------
+RECOMMENDED REMEDIATION:
+------------------------------------------------------------
+{recommendation_text}
 
-This security advisory was generated by SURAKSHA during an authorized
-security assessment.
+------------------------------------------------------------
+ASSESSMENT METADATA:
+------------------------------------------------------------
+Assessment Timestamp:    {assessment_timestamp}
+Assessing Analyst:       {sender_name} (Cybersecurity Analyst)
+Platform:                SURAKSHA Security Intelligence Scanner
+
+============================================================
+This security advisory was generated by SURAKSHA during an authorized security assessment.
+For verification or technical queries, please reply directly to: {sender_email}
 
 Regards,
 
 {sender_name}
 Cybersecurity Analyst
-{current_date}
+SURAKSHA Security Operations
 """
 
     return {
@@ -1168,5 +1220,7 @@ Cybersecurity Analyst
         "body": body,
         "target": clean_target or target,
         "risk": severity,
-        "date": current_date
+        "date": current_date,
+        "days_remaining_wording": days_remaining_wording,
+        "ssl_status": ssl_status_text
     }

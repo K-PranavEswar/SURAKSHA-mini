@@ -1,6 +1,8 @@
 import os, json, re
 import urllib.parse
 import warnings
+from dotenv import load_dotenv
+load_dotenv()
 warnings.filterwarnings("ignore")
 from datetime import datetime
 from sqlalchemy import or_
@@ -44,6 +46,15 @@ limiter = Limiter(
     default_limits=["100 per minute"],
     storage_uri="memory://"
 )
+
+@app.context_processor
+def inject_emailjs_config():
+    return {
+        "emailjs_service_id": os.environ.get("EMAILJS_SERVICE_ID", "service_gma17jk"),
+        "emailjs_template_id": os.environ.get("EMAILJS_TEMPLATE_ID", ""),
+        "emailjs_public_key": os.environ.get("EMAILJS_PUBLIC_KEY", ""),
+    }
+
 @app.errorhandler(429)
 def ratelimit_handler(error):
 
@@ -956,23 +967,18 @@ def ssl_check():
                 new_scan
             )
 
-            # Build report whenever an actual SSL finding
-            # exists, including local trust-store problems.
-            if (
-                ssl_data.get("risk") != "Low"
-                or ssl_data.get("verification_error")
-            ):
-                try:
-                    email_report = build_ssl_report_email(
-                        ssl_data,
-                        current_user
-                    )
-                except Exception as report_error:
-                    app.logger.error(
-                        "SSL report generation failed: %s",
-                        report_error
-                    )
-                    email_report = None
+            # Build report dynamically from the actual scan result
+            try:
+                email_report = build_ssl_report_email(
+                    ssl_data,
+                    current_user
+                )
+            except Exception as report_error:
+                app.logger.error(
+                    "SSL report generation failed: %s",
+                    report_error
+                )
+                email_report = None
 
             flash(
                 "SSL Check Completed Successfully",
@@ -996,9 +1002,64 @@ def ssl_check():
         email_report=email_report
     )
 
-#-----------------Report SSL-----------------
+#-----------------Report SSL & Send Advisory-----------------
 import smtplib
 from email.message import EmailMessage
+
+EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+def handle_send_ssl_advisory(data):
+    """Common helper to validate and record SSL security advisory.
+    Direct SMTP dispatch is bypassed in favor of frontend EmailJS integration (service_gma17jk)
+    to prevent duplicate email transmission.
+    """
+    domain = data.get("domain", "").strip()
+    if not domain:
+        return jsonify({"success": False, "message": "Domain is required."}), 400
+
+    recipient = data.get("recipient", "").strip()
+    if not recipient:
+        return jsonify({"success": False, "message": "Recipient email address is required."}), 400
+
+    if not EMAIL_REGEX.match(recipient):
+        return jsonify({"success": False, "message": "Invalid recipient email address format."}), 400
+
+    subject = data.get("subject", "").strip()
+    if not subject:
+        return jsonify({"success": False, "message": "Advisory subject cannot be empty."}), 400
+
+    body = data.get("body", "").strip()
+    if not body:
+        return jsonify({"success": False, "message": "Advisory body cannot be empty."}), 400
+
+    safe_user_name = current_user.username if (current_user and current_user.is_authenticated and current_user.username) else "Security Analyst"
+    safe_recipient = re.sub(r'[\r\n]', '', recipient).strip()
+    safe_subject = re.sub(r'[\r\n]', '', subject).strip()
+    sender_addr = "surakshav1@gmail.com"
+
+    # Record advisory in database
+    try:
+        from datetime import timedelta
+        new_report = ShareableReport(
+            reporter_name=safe_user_name,
+            reporter_email=sender_addr,
+            recipient=safe_recipient,
+            target=domain,
+            ssl_status=data.get("ssl_status", "At Risk"),
+            risk_level=data.get("risk_level", "Medium"),
+            subject=safe_subject,
+            email_body=body,
+            expires_at=datetime.utcnow() + timedelta(days=7)
+        )
+        db.session.add(new_report)
+        db.session.commit()
+    except Exception as db_err:
+        app.logger.warning(f"Could not record ShareableReport entry: {db_err}")
+
+    return jsonify({
+        "success": True,
+        "message": f"Security advisory recorded successfully for {safe_recipient}."
+    }), 200
 
 @app.route("/report-ssl", methods=["POST"])
 @login_required
@@ -1008,11 +1069,14 @@ def report_ssl():
     if not data:
         return jsonify({"success": False, "message": "Invalid request data."}), 400
         
+    action = data.get("action", "prepare")
+    if action in ("send", "record"):
+        return handle_send_ssl_advisory(data)
+
     domain = data.get("domain", "").strip()
     if not domain:
         return jsonify({"success": False, "message": "Domain is required."}), 400
-        
-    action = data.get("action", "prepare")
+
     # Build standardized SSL report dynamically from scan result and current_user session
     scan_payload = {
         "target": domain,
@@ -1021,24 +1085,34 @@ def report_ssl():
         "issued_to": data.get("issued_to"),
         "tls_version": data.get("tls_version"),
         "cipher": data.get("cipher"),
+        "hash_algorithm": data.get("hash_algorithm"),
         "expiry_date": data.get("expiry_date"),
         "days_remaining": data.get("days_remaining"),
         "risk": data.get("risk", "Medium"),
+        "certificate_trusted": data.get("certificate_trusted"),
+        "trust_status": data.get("trust_status"),
         "error": data.get("error") or (data.get("status") if data.get("status") != "Valid" else None)
     }
     
     report_info = build_ssl_report_email(scan_payload, current_user)
     
-    # Allow client confirmation/override of recipient if user edited it in modal
-    if "recipient" in data:
-        custom_recipient = data.get("recipient", "").strip()
-        report_info["recipient"] = custom_recipient
+    if "recipient" in data and data.get("recipient", "").strip():
+        report_info["recipient"] = data.get("recipient", "").strip()
 
     return jsonify({
         "success": True,
         "message": "Security advisory prepared successfully.",
         "report": report_info
     }), 200
+
+@app.route("/send-ssl-advisory", methods=["POST"])
+@login_required
+@limiter.limit("10 per minute")
+def send_ssl_advisory():
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "message": "Invalid request data."}), 400
+    return handle_send_ssl_advisory(data)
 
 #-----------------Report API for CPEMAIL-----------------
 
